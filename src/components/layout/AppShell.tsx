@@ -24,7 +24,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   children
 }) => {
   return (
-    <div className="min-h-screen min-h-[100dvh] flex bg-charis-bg text-charis-text transition-colors">
+    <div className="h-screen h-[100dvh] flex bg-charis-bg text-charis-text overflow-hidden transition-colors">
       {/* Desktop Navigation Rail */}
       <DesktopSidebar
         currentTab={currentTab}
@@ -32,8 +32,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         onQuickAction={onQuickAction}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main App Flex Column */}
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        {/* Top Header - Always docked at top */}
         <Header
           currentTab={currentTab}
           onSelectTab={onSelectTab}
@@ -42,13 +43,14 @@ export const AppShell: React.FC<AppShellProps> = ({
           onOpenSettings={onOpenSettings}
         />
 
-        <main className="flex-1 overflow-y-auto pb-24 md:pb-12">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Scrollable Content Area - Isolated internal scroll */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+          <div className="max-w-4xl mx-auto px-3.5 sm:px-6 py-5 sm:py-8">
             {children}
           </div>
         </main>
 
-        {/* Mobile Bottom Navigation */}
+        {/* Mobile Bottom Navigation - Permanently docked at bottom of the app */}
         <BottomNavigation
           currentTab={currentTab}
           onSelectTab={onSelectTab}

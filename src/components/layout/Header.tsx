@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-b border-charis-border/70 transition-colors pt-safe">
+      <header className="sticky top-0 shrink-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-b border-charis-border/70 transition-colors pt-safe">
         <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
           {/* Mobile brand title & quick menu trigger */}
           <div className="flex items-center gap-2.5 sm:gap-3">
