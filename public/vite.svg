@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="24" fill="#F8F2E8"/>
+  <rect x="5" y="5" width="90" height="90" rx="20" fill="none" stroke="#D95740" stroke-width="2" stroke-opacity="0.3"/>
+  <text x="50" y="66" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="#D95740" text-anchor="middle">Χ</text>
+</svg>
