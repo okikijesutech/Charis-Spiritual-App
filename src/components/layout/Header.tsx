@@ -65,23 +65,23 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-b border-charis-border/70 transition-colors pt-safe">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
           {/* Mobile brand title & quick menu trigger */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => onSelectTab && onSelectTab('home')}
-              className="w-9 h-9 rounded-xl bg-charis-terracotta/10 dark:bg-charis-terracotta-dark/15 border border-charis-terracotta/20 flex items-center justify-center text-charis-primary font-serif font-bold text-lg shadow-subtle hover:scale-105 transition-transform"
+              className="w-9 h-9 rounded-xl bg-charis-terracotta/10 dark:bg-charis-terracotta-dark/15 border border-charis-terracotta/20 flex items-center justify-center text-charis-primary font-serif font-bold text-lg shadow-subtle hover:scale-105 transition-transform shrink-0"
               title="Return to Home"
             >
               Χ
             </button>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <h1 className="font-serif text-lg font-bold tracking-tight text-charis-text leading-tight">
                   Charis
                 </h1>
                 {currentTab && (
-                  <span className="md:hidden text-[11px] font-sans text-charis-primary bg-charis-primary/10 px-2 py-0.5 rounded-full capitalize">
+                  <span className="md:hidden text-[10px] sm:text-[11px] font-sans text-charis-primary bg-charis-primary/10 px-2 py-0.5 rounded-full capitalize">
                     {currentTab}
                   </span>
                 )}
@@ -93,11 +93,11 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Mobile Menu Button (allows navigating from top if bottom bar is hidden) */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text min-w-[38px] min-h-[38px] flex items-center justify-center"
+              className="md:hidden p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text min-w-[36px] min-h-[36px] flex items-center justify-center"
               aria-label="Toggle navigation menu"
               title="Open Navigation Menu"
             >
@@ -112,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onToggleOffline}
               title={isOffline ? "Currently simulating offline mode. Click to restore online." : "Online. All records synced. Click to simulate offline mode."}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
                 isOffline
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
                   : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-400'
@@ -120,15 +120,15 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {isOffline ? (
                 <>
-                  <WifiOff className="w-3.5 h-3.5 animate-pulse" />
-                  <span className="hidden xs:inline">Offline</span>
-                  <span className="text-[10px] opacity-75">(Saved locally)</span>
+                  <WifiOff className="w-3.5 h-3.5 animate-pulse text-amber-600 dark:text-amber-400" />
+                  <span className="text-[11px] sm:text-xs font-medium">Offline</span>
+                  <span className="text-[10px] opacity-75 hidden sm:inline">(Saved locally)</span>
                 </>
               ) : (
                 <>
-                  <Wifi className="w-3.5 h-3.5" />
-                  <span className="hidden xs:inline">Online</span>
-                  <span className="text-[10px] opacity-75">Synced</span>
+                  <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-[11px] sm:text-xs font-medium">Online</span>
+                  <span className="text-[10px] opacity-75 hidden sm:inline">Synced</span>
                 </>
               )}
             </button>
@@ -136,7 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Theme switcher */}
             <button
               onClick={cycleTheme}
-              className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text flex items-center justify-center min-w-[38px] min-h-[38px]"
+              className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text flex items-center justify-center min-w-[36px] min-h-[36px]"
               title={`Current theme: ${theme}. Click to switch.`}
               aria-label={`Toggle theme: currently ${theme}`}
             >
@@ -146,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Settings button */}
             <button
               onClick={onOpenSettings}
-              className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text min-w-[38px] min-h-[38px] flex items-center justify-center"
+              className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text min-w-[36px] min-h-[36px] flex items-center justify-center"
               title="Settings & Account"
               aria-label="Settings and Preferences"
             >
