@@ -22,7 +22,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <nav 
       aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-charis-surface/95 backdrop-blur-md border-t border-charis-border pb-safe transition-colors"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-charis-surface border-t border-charis-border pb-safe shadow-lg transition-colors"
     >
       <div className="grid grid-cols-5 h-16 items-center px-1">
         {tabs.map((tab) => {

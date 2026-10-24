@@ -35,6 +35,8 @@ export const AppShell: React.FC<AppShellProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header
+          currentTab={currentTab}
+          onSelectTab={onSelectTab}
           isOffline={isOffline}
           onToggleOffline={onToggleOffline}
           onOpenSettings={onOpenSettings}
