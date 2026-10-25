@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ThemeProvider } from './context/ThemeContext'
+import { AuthProvider } from './context/AuthContext'
 import { AppShell } from './components/layout/AppShell'
 import { HomeView } from './views/HomeView'
 import { BibleView } from './views/BibleView'
@@ -25,7 +26,7 @@ export const AppContent: React.FC = () => {
   }
 
   const handleAddActivity = (_activity: ActivityLog) => {
-    // Activity successfully logged
+    // Activity logged
   }
 
   return (
@@ -83,7 +84,9 @@ export const AppContent: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ThemeProvider>
   )
 }
