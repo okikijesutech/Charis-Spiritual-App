@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { 
   Sun, 
   Moon, 
@@ -7,12 +7,16 @@ import {
   Globe, 
   Trash2, 
   Download, 
-  AlertTriangle 
+  AlertTriangle,
+  LogOut,
+  UserCheck
 } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
+import { useAuth } from '../../context/AuthContext'
 import { mockUserProfile } from '../../data/mockData'
 import { Modal } from '../ui/Modal'
 import { Badge } from '../ui/Badge'
+import { AuthForm } from '../auth/AuthForm'
 import { ThemePreference } from '../../types'
 
 interface SettingsModalProps {
@@ -25,6 +29,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose
 }) => {
   const { theme, setTheme } = useTheme()
+  const { user, profile, settings, isConfigured, signOut } = useAuth()
+  const [showAuthForm, setShowAuthForm] = useState(false)
+
+  const displayName = profile?.display_name || user?.user_metadata?.full_name || mockUserProfile.name
+  const displayEmail = user?.email || mockUserProfile.email
+  const displayTimeZone = settings?.timezone || mockUserProfile.timeZone
+
+  const handleSignOut = async () => {
+    await signOut()
+    setShowAuthForm(true)
+  }
 
   return (
     <Modal
@@ -35,29 +50,70 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       maxWidth="max-w-xl"
     >
       <div className="space-y-6 text-sm">
-        {/* Account & Profile */}
+        {/* Account & Profile Section */}
         <div className="p-4 rounded-xl border border-charis-border bg-charis-border-subtle/40">
-          <div className="flex items-center justify-between">
+          {showAuthForm && !user ? (
             <div>
-              <span className="text-xs font-semibold text-charis-text-muted uppercase tracking-wider block">
-                Account
-              </span>
-              <h3 className="font-serif font-bold text-base text-charis-text mt-0.5">
-                {mockUserProfile.name}
-              </h3>
-              <p className="text-xs text-charis-text-muted">{mockUserProfile.email}</p>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-charis-primary">
+                  Authentication
+                </span>
+                <button
+                  onClick={() => setShowAuthForm(false)}
+                  className="text-xs text-charis-text-muted hover:text-charis-text"
+                >
+                  Cancel
+                </button>
+              </div>
+              <AuthForm onSuccess={() => setShowAuthForm(false)} />
             </div>
-            <Badge variant="sage" size="sm">Active Session</Badge>
-          </div>
-          <div className="mt-3 pt-3 border-t border-charis-border/60 flex items-center justify-between text-xs text-charis-text-muted">
-            <span className="flex items-center gap-1">
-              <Globe className="w-3.5 h-3.5" />
-              {mockUserProfile.timeZone}
-            </span>
-            <span className="text-charis-primary font-medium cursor-pointer hover:underline">
-              Change Password
-            </span>
-          </div>
+          ) : (
+            <div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-charis-primary/10 text-charis-primary border border-charis-primary/20 flex items-center justify-center font-serif font-bold text-base">
+                    {displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-charis-text-muted uppercase tracking-wider block">
+                      Account
+                    </span>
+                    <h3 className="font-serif font-bold text-base text-charis-text mt-0.5">
+                      {displayName}
+                    </h3>
+                    <p className="text-xs text-charis-text-muted">{displayEmail}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end gap-1.5">
+                  <Badge variant="sage" size="sm" className="gap-1">
+                    <UserCheck className="w-3 h-3" />
+                    <span>{isConfigured ? 'Supabase Sync' : 'Demo Session'}</span>
+                  </Badge>
+                  <button
+                    onClick={handleSignOut}
+                    className="text-xs text-charis-text-muted hover:text-rose-600 flex items-center gap-1 transition-colors mt-1"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-charis-border/60 flex items-center justify-between text-xs text-charis-text-muted">
+                <span className="flex items-center gap-1">
+                  <Globe className="w-3.5 h-3.5" />
+                  {displayTimeZone}
+                </span>
+                <button
+                  onClick={() => setShowAuthForm(true)}
+                  className="text-charis-primary font-medium hover:underline"
+                >
+                  Switch Account
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Theme Preference */}

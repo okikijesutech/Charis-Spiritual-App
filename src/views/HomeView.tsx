@@ -17,6 +17,7 @@ import {
   mockFastingSchedule, 
   mockActivityLogs 
 } from '../data/mockData'
+import { useAuth } from '../context/AuthContext';
 import { NavDestination } from '../types'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -30,6 +31,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
   onOpenQuickAction
 }) => {
+  const { profile, user } = useAuth();
   const featuredPlan = mockReadingPlans[0]
   const [todayAssignment, setTodayAssignment] = useState(featuredPlan.assignments[1])
 
@@ -50,7 +52,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <span>Today’s Rhythm</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold text-charis-text mt-1">
-            Peace be with you, {mockUserProfile.name.split(' ')[0]}
+            Peace be with you, {(profile?.display_name || user?.user_metadata?.full_name || mockUserProfile.name).split(' ')[0]}
           </h2>
           <p className="text-xs sm:text-sm text-charis-text-muted mt-1 font-sans">
             Saturday, October 24 · {mockUserProfile.timeZone}
