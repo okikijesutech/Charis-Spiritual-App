@@ -12,9 +12,11 @@ import {
   BookOpen,
   Heart,
   BookMarked,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
+import { useSync } from '../../context/SyncContext'
 import { ThemePreference, NavDestination } from '../../types'
 
 interface HeaderProps {
@@ -33,7 +35,10 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings
 }) => {
   const { theme, setTheme } = useTheme()
+  const { isOnline: networkOnline, isSyncing, statusText, triggerSync, pendingCount } = useSync()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const effectiveOffline = isOffline || !networkOnline
 
   const navItems: { id: NavDestination; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'home', label: 'Home', icon: Home },
@@ -110,25 +115,47 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Offline/Sync state pill */}
             <button
-              onClick={onToggleOffline}
-              title={isOffline ? "Currently simulating offline mode. Click to restore online." : "Online. All records synced. Click to simulate offline mode."}
-              className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                isOffline
+              onClick={() => {
+                if (effectiveOffline) {
+                  onToggleOffline()
+                } else {
+                  triggerSync()
+                }
+              }}
+              title={
+                effectiveOffline
+                  ? "Offline mode. All records are saved securely on this device."
+                  : isSyncing
+                  ? "Syncing records with cloud..."
+                  : `Online. ${statusText}. Click to sync.`
+              }
+              className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                effectiveOffline
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
+                  : isSyncing
+                  ? 'bg-sky-500/10 border-sky-500/30 text-sky-700 dark:text-sky-400'
                   : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-400'
               }`}
             >
-              {isOffline ? (
+              {effectiveOffline ? (
                 <>
-                  <WifiOff className="w-3.5 h-3.5 animate-pulse text-amber-600 dark:text-amber-400" />
+                  <WifiOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
                   <span className="text-[11px] sm:text-xs font-medium">Offline</span>
                   <span className="text-[10px] opacity-75 hidden sm:inline">(Saved locally)</span>
                 </>
+              ) : isSyncing ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 animate-spin shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-medium">Syncing</span>
+                  {pendingCount > 0 && (
+                    <span className="text-[10px] opacity-75 hidden sm:inline">({pendingCount})</span>
+                  )}
+                </>
               ) : (
                 <>
-                  <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-[11px] sm:text-xs font-medium">Online</span>
-                  <span className="text-[10px] opacity-75 hidden sm:inline">Synced</span>
+                  <span className="text-[10px] opacity-75 hidden sm:inline">({statusText})</span>
                 </>
               )}
             </button>

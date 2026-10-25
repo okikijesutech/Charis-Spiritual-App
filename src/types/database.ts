@@ -31,6 +31,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       user_settings: {
         Row: {
@@ -66,6 +67,82 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      prayer_entries: {
+        Row: {
+          id: string
+          user_id: string
+          title: string | null
+          body: string
+          entry_at: string
+          tags: string[]
+          scripture_references: Json
+          is_answered: boolean
+          answered_at: string | null
+          answered_note: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id: string
+          user_id: string
+          title?: string | null
+          body: string
+          entry_at?: string
+          tags?: string[]
+          scripture_references?: Json
+          is_answered?: boolean
+          answered_at?: string | null
+          answered_note?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string | null
+          body?: string
+          entry_at?: string
+          tags?: string[]
+          scripture_references?: Json
+          is_answered?: boolean
+          answered_at?: string | null
+          answered_note?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: []
+      }
+      sync_receipts: {
+        Row: {
+          operation_id: string
+          user_id: string
+          entity_type: string
+          entity_id: string
+          server_version: number | null
+          applied_at: string
+        }
+        Insert: {
+          operation_id: string
+          user_id: string
+          entity_type: string
+          entity_id: string
+          server_version?: number | null
+          applied_at?: string
+        }
+        Update: {
+          operation_id?: string
+          user_id?: string
+          entity_type?: string
+          entity_id?: string
+          server_version?: number | null
+          applied_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

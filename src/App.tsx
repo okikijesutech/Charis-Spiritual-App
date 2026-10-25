@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ThemeProvider } from './context/ThemeContext'
 import { AuthProvider } from './context/AuthContext'
+import { SyncProvider } from './context/SyncContext'
 import { AppShell } from './components/layout/AppShell'
 import { HomeView } from './views/HomeView'
 import { BibleView } from './views/BibleView'
@@ -85,7 +86,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppContent />
+        <SyncProvider>
+          <AppContent />
+        </SyncProvider>
       </AuthProvider>
     </ThemeProvider>
   )
