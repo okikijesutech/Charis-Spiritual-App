@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
   --color-bg: #F8F2E8;
   --color-surface: #FFFCF7;
   --color-surface-elevated: #FFFFFF;
@@ -18,6 +19,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --color-bg: #13151D;
   --color-surface: #1B1E2B;
   --color-surface-elevated: #242838;
@@ -56,6 +58,28 @@
     color: var(--color-text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     user-select: auto;
+  }
+
+  select {
+    color-scheme: light;
+  }
+
+  .dark select,
+  html.dark select,
+  body.dark select {
+    color-scheme: dark;
+  }
+
+  select option {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .dark select option,
+  html.dark select option,
+  body.dark select option {
+    background-color: #1B1E2B;
+    color: #F3EFEA;
   }
 }
 

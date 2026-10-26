@@ -8,10 +8,13 @@ import {
   Type, 
   ChevronDown, 
   CheckCircle2,
-  Globe
+  Globe,
+  Search,
+  Sparkles
 } from 'lucide-react'
 import { bibleProvider } from '../lib/bible/provider'
 import { SUPPORTED_TRANSLATIONS } from '../lib/bible/canon'
+import { scriptureSearchService, type BibleSearchResult } from '../lib/bible/search'
 import type { BibleChapter, BibleVerse } from '../types/bible'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
@@ -42,6 +45,11 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
   const [activeVerse, setActiveVerse] = useState<InteractiveVerse | null>(null)
   const [copiedNotification, setCopiedNotification] = useState(false)
 
+  // Search state
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([])
+
   const activePassage = AVAILABLE_PASSAGES.find((p) => p.id === selectedPassageId) || AVAILABLE_PASSAGES[0]
   const currentTranslationMeta = SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0]
 
@@ -56,6 +64,27 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
     })
     return () => { isMounted = false }
   }, [selectedTranslation, activePassage.bookId, activePassage.chapter])
+
+  const handleSearch = async (q: string) => {
+    setSearchQuery(q)
+    if (!q.trim()) {
+      setSearchResults([])
+      return
+    }
+    const results = await scriptureSearchService.search(q, selectedTranslation)
+    setSearchResults(results)
+  }
+
+  const handleSelectSearchResult = (res: BibleSearchResult) => {
+    const passageKey = `${res.reference.bookId}:${res.reference.chapter}`
+    const existing = AVAILABLE_PASSAGES.find((p) => p.id === passageKey)
+    if (existing) {
+      setSelectedPassageId(existing.id)
+    }
+    setIsSearchOpen(false)
+    setSearchQuery('')
+    setSearchResults([])
+  }
 
   const handleToggleBookmark = (v: InteractiveVerse) => {
     setInteractiveVerses((prev) =>
@@ -97,17 +126,19 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* 1. Reader Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-charis-surface border border-charis-border shadow-subtle">
-        {/* Book, Chapter & Translation Selectors */}
+        {/* Book, Chapter, Translation Selectors & Search */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Passage Select */}
           <div className="relative inline-block">
             <select
               value={selectedPassageId}
               onChange={(e) => setSelectedPassageId(e.target.value)}
-              className="appearance-none font-serif font-bold text-base bg-charis-border-subtle/70 text-charis-text border border-charis-border rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer"
+              className="appearance-none font-serif font-bold text-sm sm:text-base bg-charis-surface text-charis-text border border-charis-border rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA]"
             >
               {AVAILABLE_PASSAGES.map((p) => (
-                <option key={p.id} value={p.id}>{p.label}</option>
+                <option key={p.id} value={p.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
+                  {p.label}
+                </option>
               ))}
             </select>
             <ChevronDown className="w-4 h-4 text-charis-text-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -118,16 +149,26 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
             <select
               value={selectedTranslation}
               onChange={(e) => setSelectedTranslation(e.target.value)}
-              className="appearance-none font-sans font-semibold text-xs bg-charis-border-subtle/70 text-charis-text border border-charis-border rounded-xl px-3 py-2 pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer"
+              className="appearance-none font-sans font-semibold text-xs bg-charis-surface text-charis-text border border-charis-border rounded-xl px-3 py-2 pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA]"
             >
               {SUPPORTED_TRANSLATIONS.map((t) => (
-                <option key={t.id} value={t.id}>
+                <option key={t.id} value={t.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
                   {t.shortName} — {t.name}
                 </option>
               ))}
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-charis-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
+
+          {/* Quick Search Button */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text transition-colors flex items-center gap-1.5 text-xs shadow-subtle"
+            title="Search Scripture passages and topics"
+          >
+            <Search className="w-3.5 h-3.5 text-charis-primary" />
+            <span className="hidden md:inline">Search</span>
+          </button>
 
           <Badge variant={currentTranslationMeta.offlineDownloadable ? "sage" : "outline"} size="sm" className="hidden sm:inline-flex items-center gap-1">
             {currentTranslationMeta.offlineDownloadable ? (
@@ -227,7 +268,69 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
         </footer>
       </article>
 
-      {/* 3. Verse Interaction Modal */}
+      {/* 3. Scripture Search Modal */}
+      <Modal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        title="Search Scripture & Topics"
+        description="Search passages (e.g. 'John 15', 'Rom 8') or topics like 'peace' or 'comfort'"
+      >
+        <div className="space-y-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search passage, word or topic..."
+              autoFocus
+              className="w-full px-3.5 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-charis-text focus:outline-none focus:ring-2 focus:ring-charis-primary text-sm shadow-subtle"
+            />
+          </div>
+
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {searchResults.length > 0 ? (
+              searchResults.map((res, idx) => (
+                <button
+                  key={`${res.formattedRef}-${idx}`}
+                  onClick={() => handleSelectSearchResult(res)}
+                  className="w-full p-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-left transition-colors flex items-start gap-2.5"
+                >
+                  <Sparkles className="w-4 h-4 text-charis-primary shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-xs font-bold text-charis-primary block">
+                      {res.formattedRef} {res.topicLabel && `· ${res.topicLabel}`}
+                    </span>
+                    <p className="text-xs text-charis-text line-clamp-2 mt-0.5 font-serif italic">
+                      “{res.text}”
+                    </p>
+                  </div>
+                </button>
+              ))
+            ) : searchQuery.trim() ? (
+              <p className="text-xs text-charis-text-muted text-center py-4">
+                No matching passages found. Try searching &quot;peace&quot;, &quot;comfort&quot;, or &quot;John 15&quot;.
+              </p>
+            ) : (
+              <div className="text-xs text-charis-text-muted space-y-1.5 p-2">
+                <span className="font-semibold text-charis-text block">Suggested Topics:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {['peace', 'comfort', 'love', 'abiding'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => handleSearch(t)}
+                      className="px-2.5 py-1 rounded-lg border border-charis-border bg-charis-surface hover:bg-charis-border-subtle capitalize"
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
+
+      {/* 4. Verse Interaction Modal */}
       <Modal
         isOpen={Boolean(activeVerse)}
         onClose={() => setActiveVerse(null)}
