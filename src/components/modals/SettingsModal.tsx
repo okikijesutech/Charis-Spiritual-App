@@ -18,6 +18,7 @@ import { Badge } from '../ui/Badge'
 import { AuthForm } from '../auth/AuthForm'
 import { ThemePreference } from '../../types'
 import { prayerRepository } from '../../lib/db/prayer-repository'
+import { studyRepository } from '../../lib/db/study-repository'
 import { syncQueueManager } from '../../lib/sync/sync-queue'
 import { OfflineTranslationsSection } from '../settings/OfflineTranslationsSection'
 
@@ -56,6 +57,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     const activeUserId = user?.id || 'demo-user-id'
     if (wipeLocal) {
       await prayerRepository.clearUserData(activeUserId)
+      await studyRepository.clearUserData(activeUserId)
       await syncQueueManager.clearQueue(activeUserId)
     }
     await signOut()
@@ -67,6 +69,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setIsClearing(true)
     const activeUserId = user?.id || 'demo-user-id'
     await prayerRepository.clearUserData(activeUserId)
+    await studyRepository.clearUserData(activeUserId)
     await syncQueueManager.clearQueue(activeUserId)
     setIsClearing(false)
     setClearSuccess(true)

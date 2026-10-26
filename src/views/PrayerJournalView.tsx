@@ -1,68 +1,56 @@
-import React, { useState } from 'react'
-import { 
-  Heart, 
-  Search, 
-  Plus, 
-  BookOpen, 
-  Calendar
-} from 'lucide-react'
-import { mockPrayerEntries } from '../data/mockData'
-import { PrayerEntry } from '../types'
-import { Badge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
-import { Modal } from '../components/ui/Modal'
+import React, { useState } from 'react';
+import { Heart, Plus, Download, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { usePrayerJournal } from '../hooks/usePrayerJournal';
+import type { PrayerEntry } from '../types/journal';
+import { Button } from '../components/ui/Button';
+import { PrayerCard } from '../components/journal/PrayerCard';
+import { PrayerEditorModal } from '../components/journal/PrayerEditorModal';
+import { ConflictResolutionModal } from '../components/journal/ConflictResolutionModal';
+import { PrayerFilterBar } from '../components/journal/PrayerFilterBar';
+import { exportPrayersToMarkdown } from '../components/journal/PrayerExport';
 
 export const PrayerJournalView: React.FC = () => {
-  const [prayers, setPrayers] = useState<PrayerEntry[]>(mockPrayerEntries)
-  const [selectedTag, setSelectedTag] = useState<string>('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isEditorOpen, setIsEditorOpen] = useState(false)
+  const { user } = useAuth();
+  const activeUserId = user?.id || 'demo-user-id';
 
-  // Editor form state
-  const [entryTitle, setEntryTitle] = useState('')
-  const [entryBody, setEntryBody] = useState('')
-  const [entryTags, setEntryTags] = useState('Peace, Morning')
-  const [entryScripture, setEntryScripture] = useState('')
-  const [promptMode, setPromptMode] = useState<'freeform' | 'thanksgiving' | 'adoration' | 'supplication'>('thanksgiving')
+  const {
+    prayers,
+    isLoading,
+    savePrayer,
+    toggleAnswered,
+    deletePrayer,
+    conflictPrayer,
+    setConflictPrayer,
+    resolveConflict,
+  } = usePrayerJournal(activeUserId);
 
-  const promptGuidance = {
-    freeform: 'Pour out your heart honestly without structured prompts.',
-    adoration: 'Praise God for who He is—His holiness, patience, mercy, and majesty.',
-    confession: 'Bring mistakes and burdens into the light of His unfailing forgiveness.',
-    thanksgiving: 'Recall specific mercies, answers, and quiet gifts received recently.',
-    supplication: 'Ask with humble trust for personal needs, healing, and guidance for others.'
-  }
+  const [selectedTag, setSelectedTag] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ongoing' | 'answered'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const allTags = ['All', ...Array.from(new Set(mockPrayerEntries.flatMap(p => p.tags)))]
+  // Modals state
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingPrayer, setEditingPrayer] = useState<PrayerEntry | null>(null);
 
-  const filteredPrayers = prayers.filter(p => {
-    const matchesTag = selectedTag === 'All' || p.tags.includes(selectedTag)
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.body.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesTag && matchesSearch
-  })
+  // Derive unique tag list
+  const allTags = ['All', ...Array.from(new Set(prayers.flatMap((p) => p.tags || [])))];
 
-  const handleSavePrayer = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!entryBody.trim()) return
-
-    const newPrayer: PrayerEntry = {
-      id: `prayer-${Date.now()}`,
-      title: entryTitle.trim() || 'Untitled Reflection',
-      body: entryBody.trim(),
-      date: 'Just now',
-      tags: entryTags.split(',').map(t => t.trim()).filter(Boolean),
-      scriptureRef: entryScripture.trim() || undefined,
-      promptType: promptMode,
-      syncStatus: 'local'
-    }
-
-    setPrayers([newPrayer, ...prayers])
-    setIsEditorOpen(false)
-    setEntryTitle('')
-    setEntryBody('')
-    setEntryScripture('')
-  }
+  // Filtered prayers
+  const filteredPrayers = prayers.filter((p) => {
+    const matchesTag = selectedTag === 'All' || p.tags?.includes(selectedTag);
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'answered' && p.isAnswered) ||
+      (statusFilter === 'ongoing' && !p.isAnswered);
+    const textQuery = searchQuery.toLowerCase();
+    const matchesSearch =
+      (p.title && p.title.toLowerCase().includes(textQuery)) ||
+      p.body.toLowerCase().includes(textQuery) ||
+      (p.scriptureReferences?.[0]?.formatted &&
+        p.scriptureReferences[0].formatted.toLowerCase().includes(textQuery));
+    return matchesTag && matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -81,215 +69,117 @@ export const PrayerJournalView: React.FC = () => {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={() => setIsEditorOpen(true)}
-          className="gap-2 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Prayer</span>
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {prayers.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => exportPrayersToMarkdown(prayers)} className="gap-1.5 text-xs">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export</span>
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            onClick={() => {
+              setEditingPrayer(null);
+              setIsEditorOpen(true);
+            }}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Prayer</span>
+          </Button>
+        </div>
       </div>
 
       {/* Search & Tag Filter Bar */}
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="w-4 h-4 text-charis-text-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search prayer reflections, topics, or verses..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-sm text-charis-text placeholder:text-charis-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary"
-          />
-        </div>
-
-        {/* Tag chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {allTags.map(tag => (
-            <button
-              key={tag}
-              onClick={() => setSelectedTag(tag)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
-                selectedTag === tag
-                  ? 'bg-charis-primary text-white'
-                  : 'bg-charis-surface border border-charis-border text-charis-text-muted hover:text-charis-text'
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      </div>
+      <PrayerFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        selectedTag={selectedTag}
+        onTagChange={setSelectedTag}
+        allTags={allTags}
+      />
 
       {/* Prayer Entries List */}
       <div className="space-y-4">
-        {filteredPrayers.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 text-sm text-charis-text-muted">Loading prayers...</div>
+        ) : filteredPrayers.length === 0 ? (
           <div className="text-center py-12 rounded-2xl bg-charis-surface border border-charis-border p-6">
             <Heart className="w-8 h-8 text-charis-text-muted mx-auto mb-2 opacity-50" />
-            <h3 className="font-serif font-bold text-base text-charis-text">No prayers found</h3>
+            <h3 className="font-serif font-bold text-base text-charis-text">
+              {searchQuery ? 'No matching prayers' : 'No prayer entries yet'}
+            </h3>
             <p className="text-xs text-charis-text-muted mt-1 max-w-sm mx-auto">
-              {searchQuery ? 'Try a different search keyword.' : 'Begin by capturing your first quiet prayer or gratitude reflection.'}
+              {searchQuery
+                ? 'Try a different search keyword or clear tag filters.'
+                : 'Begin by capturing your first quiet prayer, thanksgiving, or petition.'}
             </p>
+            {!searchQuery && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditingPrayer(null);
+                  setIsEditorOpen(true);
+                }}
+                className="mt-4 gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-charis-primary" />
+                Write First Prayer
+              </Button>
+            )}
           </div>
         ) : (
           filteredPrayers.map((prayer) => (
-            <article
+            <PrayerCard
               key={prayer.id}
-              className="p-6 rounded-2xl bg-charis-surface border border-charis-border shadow-card hover:border-charis-primary/30 transition-all"
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div>
-                  <h3 className="font-serif font-bold text-lg text-charis-text">
-                    {prayer.title}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-charis-text-muted">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {prayer.date}
-                    </span>
-                    {prayer.scriptureRef && (
-                      <span className="flex items-center gap-1 text-charis-primary font-medium">
-                        <BookOpen className="w-3 h-3" />
-                        {prayer.scriptureRef}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <Badge variant={prayer.syncStatus === 'synced' ? 'sage' : 'neutral'} size="sm">
-                  {prayer.syncStatus === 'synced' ? 'Synced' : 'Saved locally'}
-                </Badge>
-              </div>
-
-              <p className="text-sm text-charis-text font-serif leading-relaxed my-3 whitespace-pre-wrap">
-                {prayer.body}
-              </p>
-
-              {prayer.tags.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-charis-border/60">
-                  {prayer.tags.map(tag => (
-                    <Badge key={tag} variant="neutral" size="sm">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </article>
+              prayer={prayer}
+              onEdit={(p) => {
+                setEditingPrayer(p);
+                setIsEditorOpen(true);
+              }}
+              onToggleAnswered={toggleAnswered}
+              onDelete={deletePrayer}
+              onResolveConflict={(p) => setConflictPrayer(p)}
+            />
           ))
         )}
       </div>
 
-      {/* New Prayer Modal / Bottom Sheet */}
-      <Modal
+      {/* Editor Modal */}
+      <PrayerEditorModal
         isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        title="Compose Prayer Reflection"
-        description="Private to your account. Autosaved to your device."
-        maxWidth="max-w-xl"
-      >
-        <form onSubmit={handleSavePrayer} className="space-y-4">
-          {/* Mode Selector */}
-          <div>
-            <label className="text-xs font-semibold text-charis-text-muted block mb-1.5">
-              Rhythm Mode
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              {(['thanksgiving', 'adoration', 'supplication', 'freeform'] as const).map(mode => (
-                <button
-                  type="button"
-                  key={mode}
-                  onClick={() => setPromptMode(mode)}
-                  className={`py-1.5 px-2 text-xs font-medium rounded-xl border capitalize transition-all ${
-                    promptMode === mode
-                      ? 'bg-charis-primary text-white border-charis-primary'
-                      : 'bg-charis-border-subtle/70 border-charis-border text-charis-text-muted hover:text-charis-text'
-                  }`}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-charis-text-muted mt-2 italic bg-charis-border-subtle/50 p-2 rounded-lg">
-              {promptGuidance[promptMode]}
-            </p>
-          </div>
+        onClose={() => {
+          setIsEditorOpen(false);
+          setEditingPrayer(null);
+        }}
+        onSave={savePrayer}
+        editingPrayer={editingPrayer}
+      />
 
-          {/* Title */}
-          <div>
-            <label className="text-xs font-semibold text-charis-text-muted block mb-1">
-              Title (optional)
-            </label>
-            <input
-              type="text"
-              value={entryTitle}
-              onChange={(e) => setEntryTitle(e.target.value)}
-              placeholder="e.g. Peace in this morning's decisions"
-              className="w-full px-3.5 py-2 rounded-xl border border-charis-border bg-charis-surface text-sm text-charis-text focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary"
-            />
-          </div>
-
-          {/* Body */}
-          <div>
-            <label className="text-xs font-semibold text-charis-text-muted block mb-1">
-              Prayer Content
-            </label>
-            <textarea
-              required
-              rows={5}
-              value={entryBody}
-              onChange={(e) => setEntryBody(e.target.value)}
-              placeholder="Speak honestly and unhurriedly..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-sm text-charis-text font-serif leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary resize-none"
-            />
-          </div>
-
-          {/* Scripture & Tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-charis-text-muted block mb-1">
-                Scripture Reference (optional)
-              </label>
-              <input
-                type="text"
-                value={entryScripture}
-                onChange={(e) => setEntryScripture(e.target.value)}
-                placeholder="e.g. Psalm 23:1"
-                className="w-full px-3 py-1.5 rounded-xl border border-charis-border bg-charis-surface text-xs text-charis-text focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-charis-text-muted block mb-1">
-                Tags (comma separated)
-              </label>
-              <input
-                type="text"
-                value={entryTags}
-                onChange={(e) => setEntryTags(e.target.value)}
-                placeholder="e.g. Peace, Family, Morning"
-                className="w-full px-3 py-1.5 rounded-xl border border-charis-border bg-charis-surface text-xs text-charis-text focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary"
-              />
-            </div>
-          </div>
-
-          {/* Form Actions */}
-          <div className="pt-3 flex items-center justify-end gap-2 border-t border-charis-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsEditorOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-            >
-              Save Prayer
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Conflict Resolution Modal */}
+      {conflictPrayer && (
+        <ConflictResolutionModal
+          isOpen={!!conflictPrayer}
+          onClose={() => setConflictPrayer(null)}
+          title={conflictPrayer.title || 'Prayer Entry'}
+          localContent={{
+            title: conflictPrayer.title,
+            body: conflictPrayer.body,
+            updatedAt: conflictPrayer.updatedAt,
+          }}
+          remoteContent={{
+            title: (conflictPrayer.sync.conflictCopy as any)?.title,
+            body: (conflictPrayer.sync.conflictCopy as any)?.body || '',
+            updatedAt: (conflictPrayer.sync.conflictCopy as any)?.updated_at || conflictPrayer.updatedAt,
+          }}
+          onKeepLocal={() => resolveConflict('local')}
+          onKeepRemote={() => resolveConflict('remote')}
+          onMergeBoth={() => resolveConflict('merge')}
+        />
+      )}
     </div>
-  )
-}
+  );
+};
