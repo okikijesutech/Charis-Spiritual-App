@@ -8,6 +8,7 @@
 import { supabase, isSupabaseConfigured } from '../supabase/client';
 import { syncQueueManager } from './sync-queue';
 import { prayerRepository } from '../db/prayer-repository';
+import { studyRepository } from '../db/study-repository';
 import type { SyncOperation } from '../../types/sync';
 
 export interface SyncEngineStatus {
@@ -131,6 +132,9 @@ export class SyncEngine {
       if (op.entityType === 'prayer_entry') {
         return await this.syncPrayerEntry(op);
       }
+      if (op.entityType === 'study_entry') {
+        return await this.syncStudyEntry(op);
+      }
 
       return true;
     } catch (err) {
@@ -207,11 +211,70 @@ export class SyncEngine {
 
     const { error: upsertErr } = await supabase.from('prayer_entries').upsert(row);
 
-    if (upsertErr) {
-      throw new Error(upsertErr.message);
+    if (upsertErr) throw new Error(upsertErr.message);
+
+    await this.recordOpReceipt(op);
+    await prayerRepository.markSynced(op.entityId, op.userId, 1);
+    return true;
+  }
+
+  private async syncStudyEntry(op: SyncOperation): Promise<boolean> {
+    if (!supabase) return false;
+
+    if (op.action === 'delete') {
+      const { error } = await supabase
+        .from('study_entries')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', op.entityId)
+        .eq('user_id', op.userId);
+
+      if (error && error.code !== 'PGRST116') throw new Error(error.message);
+      await this.recordOpReceipt(op);
+      return true;
     }
 
-    // Record receipt & mark synced locally
+    const { data: remoteData, error: fetchErr } = await supabase
+      .from('study_entries')
+      .select('updated_at')
+      .eq('id', op.entityId)
+      .maybeSingle();
+
+    if (fetchErr) throw new Error(fetchErr.message);
+
+    if (remoteData?.updated_at) {
+      const remoteTime = new Date(remoteData.updated_at).getTime();
+      const localBaseTime = new Date(op.queuedAt).getTime();
+      if (remoteTime > localBaseTime) {
+        await studyRepository.markConflict(op.entityId, op.userId, 1, remoteData);
+        return true;
+      }
+    }
+
+    const p = (op.payload as Record<string, unknown>) || {};
+    const row = {
+      id: op.entityId,
+      user_id: op.userId,
+      title: typeof p.title === 'string' ? p.title : null,
+      body: typeof p.body === 'string' ? p.body : null,
+      passage_ref: p.passageRef ? (p.passageRef as any) : null,
+      observations: typeof p.observations === 'string' ? p.observations : null,
+      questions_context: typeof p.questionsContext === 'string' ? p.questionsContext : null,
+      interpretation: typeof p.interpretation === 'string' ? p.interpretation : null,
+      application: typeof p.application === 'string' ? p.application : null,
+      notes: typeof p.notes === 'string' ? p.notes : null,
+      cross_references: Array.isArray(p.crossReferences) ? (p.crossReferences as any) : [],
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: upsertErr } = await supabase.from('study_entries').upsert(row);
+    if (upsertErr) throw new Error(upsertErr.message);
+
+    await this.recordOpReceipt(op);
+    await studyRepository.markSynced(op.entityId, op.userId, 1);
+    return true;
+  }
+
+  private async recordOpReceipt(op: SyncOperation): Promise<void> {
     await syncQueueManager.recordReceipt({
       operationId: op.operationId,
       userId: op.userId,
@@ -219,9 +282,6 @@ export class SyncEngine {
       entityId: op.entityId,
       appliedAt: new Date().toISOString(),
     });
-
-    await prayerRepository.markSynced(op.entityId, op.userId, 1);
-    return true;
   }
 }
 

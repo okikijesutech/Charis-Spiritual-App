@@ -43,5 +43,6 @@ export interface StudyEntry extends BaseEntity {
   questionsContext?: string;
   interpretation?: string;
   application?: string;
+  notes?: string;
   crossReferences: ScriptureReference[];
 }

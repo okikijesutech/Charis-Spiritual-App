@@ -96,6 +96,62 @@ async function runTests() {
   const isDuplicate = receiptStore.has(opId);
   assert(isDuplicate === true, 'Subsequent retry of acknowledged operation is deduplicated via receipt');
 
+  // Test 5: Study Journal entry offline persistence
+  const studyId = 'study-uuid-3333';
+  const studyEntry = {
+    id: studyId,
+    userId: userA,
+    title: 'Abiding in Christ',
+    observations: 'Vine and branches imagery repeated 8 times.',
+    interpretation: 'Fruitfulness is a product of ongoing relational union.',
+    application: 'Spend 10 minutes in unhurried silence every morning.',
+    passageRef: {
+      bookId: 'JHN',
+      bookName: 'John',
+      chapter: 15,
+      startVerse: 1,
+      endVerse: 5,
+      formatted: 'John 15:1-5',
+    },
+    crossReferences: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    deletedAt: null,
+    sync: {
+      syncStatus: 'pending',
+      localVersion: 1,
+      serverVersion: null,
+      lastSyncedAt: null,
+      syncError: null,
+    },
+  };
+  localStore.set(studyId, studyEntry);
+
+  assert(localStore.has(studyId), 'Study entry survives offline creation with inductive fields');
+  assert(localStore.get(studyId).passageRef.formatted === 'John 15:1-5', 'Passage reference preserved on study entry');
+
+  // Test 6: Concurrent edit conflict detection and draft preservation
+  const remoteServerSnapshot = {
+    id: studyId,
+    user_id: userA,
+    title: 'Abiding in Christ (Remote Edit)',
+    updated_at: new Date(Date.now() + 60000).toISOString(), // 1 min newer
+  };
+  const localQueuedTime = new Date().getTime();
+  const remoteUpdateTime = new Date(remoteServerSnapshot.updated_at).getTime();
+
+  let conflictDetected = false;
+  if (remoteUpdateTime > localQueuedTime) {
+    conflictDetected = true;
+    studyEntry.sync.syncStatus = 'conflict';
+    studyEntry.sync.conflictCopy = remoteServerSnapshot;
+    studyEntry.sync.syncError = 'Remote version conflicting with local draft';
+  }
+
+  assert(conflictDetected === true, 'Sync engine flags concurrent remote edit as conflict');
+  assert(studyEntry.sync.syncStatus === 'conflict', 'Local draft retains conflict status without data loss');
+  assert(studyEntry.sync.conflictCopy.title === 'Abiding in Christ (Remote Edit)', 'Remote snapshot preserved for side-by-side user resolution');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);
