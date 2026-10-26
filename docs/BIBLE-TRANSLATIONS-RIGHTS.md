@@ -27,6 +27,7 @@ Under no circumstances will Charis bundle or bulk-download proprietary translati
 | **`asv`** | American Standard Version (1901) | English | **Public Domain** | **Yes (Full)** | Expired copyright worldwide. |
 | **`esv`** | English Standard Version | English | **Copyrighted (Crossway)** | **No (Online API Only)** | Requires Crossway API integration and attribution: *"Scripture quotations are from the ESV® Bible... Copyright © 2001 by Crossway."* |
 | **`niv`** | New International Version | English | **Copyrighted (Biblica)** | **No (Online API Only)** | Requires Biblica / API.Bible developer token. Bulk offline caching restricted to active session cache. |
+| **`nlt`** | New Living Translation | English | **Copyrighted (Tyndale House)** | **No (Online API Only)** | Requires Tyndale House / API.Bible developer token and attribution: *"Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers."* |
 
 ---
 

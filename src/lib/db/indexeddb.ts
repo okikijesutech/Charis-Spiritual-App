@@ -7,9 +7,16 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { PrayerEntry, StudyEntry } from '../../types/journal';
 import type { SyncOperation } from '../../types/sync';
+import type { BibleChapter } from '../../types/bible';
 
 export const DB_NAME = 'charis_local_db';
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
+
+export interface InstalledTranslation {
+  translationId: string;
+  installedAt: string;
+  sizeBytes: number;
+}
 
 export interface SyncReceipt {
   operationId: string;
@@ -54,6 +61,17 @@ export interface CharisDBSchema extends DBSchema {
       'by-user': string;
       'by-user-applied': [string, string];
     };
+  };
+  bible_chapters: {
+    key: string; // e.g. 'web:PSA:23'
+    value: BibleChapter;
+    indexes: {
+      'by-translation': string;
+    };
+  };
+  installed_translations: {
+    key: string; // translationId
+    value: InstalledTranslation;
   };
 }
 
@@ -100,6 +118,17 @@ export async function getDB(): Promise<IDBPDatabase<CharisDBSchema>> {
           const receiptStore = db.createObjectStore('sync_receipts', { keyPath: 'operationId' });
           receiptStore.createIndex('by-user', 'userId', { unique: false });
           receiptStore.createIndex('by-user-applied', ['userId', 'appliedAt'], { unique: false });
+        }
+      }
+
+      // Version 2: Downloaded Bible Chapters cache & installed translations
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('bible_chapters')) {
+          const chapterStore = db.createObjectStore('bible_chapters', { keyPath: 'id' });
+          chapterStore.createIndex('by-translation', 'translationId', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('installed_translations')) {
+          db.createObjectStore('installed_translations', { keyPath: 'translationId' });
         }
       }
     },

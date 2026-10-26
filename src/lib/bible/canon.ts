@@ -55,6 +55,15 @@ export const SUPPORTED_TRANSLATIONS: BibleTranslationMeta[] = [
     attribution: 'Scripture quotations taken from The Holy Bible, New International Version® NIV®.',
     offlineDownloadable: false,
   },
+  {
+    id: 'nlt',
+    name: 'New Living Translation',
+    shortName: 'NLT',
+    languageCode: 'en',
+    licenseType: 'copyrighted_api',
+    attribution: 'Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers.',
+    offlineDownloadable: false,
+  },
 ];
 
 export const CANONICAL_BOOKS: CanonicalBook[] = [

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Bookmark, 
   Highlighter, 
@@ -7,10 +7,12 @@ import {
   Check, 
   Type, 
   ChevronDown, 
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from 'lucide-react'
-import { mockScripturePsalm23, mockScriptureJohn15 } from '../data/mockData'
-import { ScriptureVerse } from '../types'
+import { bibleProvider } from '../lib/bible/provider'
+import { SUPPORTED_TRANSLATIONS } from '../lib/bible/canon'
+import type { BibleChapter, BibleVerse } from '../types/bible'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
 import { Button } from '../components/ui/Button'
@@ -19,51 +21,70 @@ interface BibleViewProps {
   onAttachStudyNote?: (verseRef: string) => void
 }
 
+interface InteractiveVerse extends BibleVerse {
+  isBookmarked?: boolean;
+  isHighlighted?: boolean;
+  highlightColor?: 'terracotta' | 'sage' | 'amber';
+}
+
+const AVAILABLE_PASSAGES: { id: string; label: string; bookId: string; chapter: number }[] = [
+  { id: 'PSA:23', label: 'Psalm 23', bookId: 'PSA', chapter: 23 },
+  { id: 'JHN:15', label: 'John 15', bookId: 'JHN', chapter: 15 },
+  { id: 'ROM:8', label: 'Romans 8', bookId: 'ROM', chapter: 8 },
+]
+
 export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
-  const [selectedBook, setSelectedBook] = useState<'Psalm 23' | 'John 15'>('Psalm 23')
-  const [fontSize, setFontSize] = useState<number>(18) // in px
-  const [verses, setVerses] = useState<ScriptureVerse[]>(mockScripturePsalm23)
-  
-  // Verse context action state
-  const [activeVerse, setActiveVerse] = useState<ScriptureVerse | null>(null)
+  const [selectedTranslation, setSelectedTranslation] = useState<string>('web')
+  const [selectedPassageId, setSelectedPassageId] = useState<string>('PSA:23')
+  const [fontSize, setFontSize] = useState<number>(18)
+  const [chapter, setChapter] = useState<BibleChapter | null>(null)
+  const [interactiveVerses, setInteractiveVerses] = useState<InteractiveVerse[]>([])
+  const [activeVerse, setActiveVerse] = useState<InteractiveVerse | null>(null)
   const [copiedNotification, setCopiedNotification] = useState(false)
 
-  const handleSelectPassage = (passage: 'Psalm 23' | 'John 15') => {
-    setSelectedBook(passage)
-    setVerses(passage === 'Psalm 23' ? mockScripturePsalm23 : mockScriptureJohn15)
-    setActiveVerse(null)
-  }
+  const activePassage = AVAILABLE_PASSAGES.find((p) => p.id === selectedPassageId) || AVAILABLE_PASSAGES[0]
+  const currentTranslationMeta = SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0]
 
-  const handleToggleBookmark = (targetVerse: ScriptureVerse) => {
-    setVerses(prev => prev.map(v => {
-      if (v.book === targetVerse.book && v.chapter === targetVerse.chapter && v.verse === targetVerse.verse) {
-        return { ...v, isBookmarked: !v.isBookmarked }
+  useEffect(() => {
+    let isMounted = true
+    bibleProvider.getChapter(selectedTranslation, activePassage.bookId, activePassage.chapter).then((res) => {
+      if (isMounted) {
+        setChapter(res)
+        setInteractiveVerses(res.verses.map((v) => ({ ...v })))
+        setActiveVerse(null)
       }
-      return v
-    }))
+    })
+    return () => { isMounted = false }
+  }, [selectedTranslation, activePassage.bookId, activePassage.chapter])
+
+  const handleToggleBookmark = (v: InteractiveVerse) => {
+    setInteractiveVerses((prev) =>
+      prev.map((item) => (item.verseNumber === v.verseNumber ? { ...item, isBookmarked: !item.isBookmarked } : item))
+    )
     if (activeVerse) {
-      setActiveVerse(prev => prev ? { ...prev, isBookmarked: !prev.isBookmarked } : null)
+      setActiveVerse((prev) => (prev ? { ...prev, isBookmarked: !prev.isBookmarked } : null))
     }
   }
 
-  const handleHighlight = (color: 'terracotta' | 'sage' | 'yellow' | 'none') => {
+  const handleHighlight = (color: 'terracotta' | 'sage' | 'amber' | 'none') => {
     if (!activeVerse) return
-    setVerses(prev => prev.map(v => {
-      if (v.book === activeVerse.book && v.chapter === activeVerse.chapter && v.verse === activeVerse.verse) {
-        return { 
-          ...v, 
-          isHighlighted: color !== 'none',
-          highlightColor: color !== 'none' ? color : undefined
-        }
-      }
-      return v
-    }))
+    setInteractiveVerses((prev) =>
+      prev.map((item) =>
+        item.verseNumber === activeVerse.verseNumber
+          ? {
+              ...item,
+              isHighlighted: color !== 'none',
+              highlightColor: color !== 'none' ? color : undefined,
+            }
+          : item
+      )
+    )
     setActiveVerse(null)
   }
 
   const handleCopy = () => {
-    if (!activeVerse) return
-    const textToCopy = `"${activeVerse.text}" — ${activeVerse.book} ${activeVerse.chapter}:${activeVerse.verse} (BSB)`
+    if (!activeVerse || !chapter) return
+    const textToCopy = `"${activeVerse.text}" — ${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`
     navigator.clipboard.writeText(textToCopy)
     setCopiedNotification(true)
     setTimeout(() => {
@@ -74,44 +95,69 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* 1. Bible Reader Toolbar */}
+      {/* 1. Reader Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-charis-surface border border-charis-border shadow-subtle">
-        {/* Book & Chapter Selector */}
-        <div className="flex items-center gap-2">
+        {/* Book, Chapter & Translation Selectors */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Passage Select */}
           <div className="relative inline-block">
             <select
-              value={selectedBook}
-              onChange={(e) => handleSelectPassage(e.target.value as 'Psalm 23' | 'John 15')}
-              className="appearance-none font-serif font-bold text-base sm:text-lg bg-charis-border-subtle/70 text-charis-text border border-charis-border rounded-xl px-3.5 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer"
+              value={selectedPassageId}
+              onChange={(e) => setSelectedPassageId(e.target.value)}
+              className="appearance-none font-serif font-bold text-base bg-charis-border-subtle/70 text-charis-text border border-charis-border rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer"
             >
-              <option value="Psalm 23">Psalm 23</option>
-              <option value="John 15">John 15:1–5</option>
+              {AVAILABLE_PASSAGES.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
             </select>
             <ChevronDown className="w-4 h-4 text-charis-text-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          <Badge variant="sage" size="sm" className="hidden sm:inline-flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>BSB · Offline</span>
+          {/* Translation Select */}
+          <div className="relative inline-block">
+            <select
+              value={selectedTranslation}
+              onChange={(e) => setSelectedTranslation(e.target.value)}
+              className="appearance-none font-sans font-semibold text-xs bg-charis-border-subtle/70 text-charis-text border border-charis-border rounded-xl px-3 py-2 pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer"
+            >
+              {SUPPORTED_TRANSLATIONS.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.shortName} — {t.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-charis-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          <Badge variant={currentTranslationMeta.offlineDownloadable ? "sage" : "outline"} size="sm" className="hidden sm:inline-flex items-center gap-1">
+            {currentTranslationMeta.offlineDownloadable ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Offline Ready</span>
+              </>
+            ) : (
+              <>
+                <Globe className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                <span>API Licensed</span>
+              </>
+            )}
           </Badge>
         </div>
 
         {/* Font Size Adjuster */}
-        <div className="flex items-center gap-1.5 border border-charis-border rounded-xl px-2 py-1 bg-charis-border-subtle/40">
+        <div className="flex items-center gap-1 border border-charis-border rounded-xl px-2 py-1 bg-charis-border-subtle/40">
           <Type className="w-3.5 h-3.5 text-charis-text-muted mr-1" />
           <button
-            onClick={() => setFontSize(prev => Math.max(15, prev - 1))}
+            onClick={() => setFontSize((prev) => Math.max(15, prev - 1))}
             className="w-7 h-7 flex items-center justify-center rounded text-xs font-semibold hover:bg-charis-border text-charis-text transition-colors"
             title="Decrease font size"
             aria-label="Decrease text size"
           >
             A-
           </button>
-          <span className="text-xs text-charis-text-muted font-mono px-1">
-            {fontSize}
-          </span>
+          <span className="text-xs text-charis-text-muted font-mono px-1">{fontSize}</span>
           <button
-            onClick={() => setFontSize(prev => Math.min(26, prev + 1))}
+            onClick={() => setFontSize((prev) => Math.min(26, prev + 1))}
             className="w-7 h-7 flex items-center justify-center rounded text-sm font-semibold hover:bg-charis-border text-charis-text transition-colors"
             title="Increase font size"
             aria-label="Increase text size"
@@ -123,25 +169,24 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
 
       {/* 2. Scripture Reading Surface */}
       <article className="rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 shadow-card">
-        {/* Chapter Header */}
         <header className="text-center pb-8 border-b border-charis-border/60">
           <span className="text-xs font-semibold tracking-wider uppercase text-charis-primary">
-            Berean Standard Bible
+            {currentTranslationMeta.name} ({currentTranslationMeta.shortName})
           </span>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-charis-text mt-1">
-            {selectedBook}
+            {chapter ? `${chapter.bookName} ${chapter.chapterNumber}` : activePassage.label}
           </h2>
-          <p className="text-xs text-charis-text-muted font-serif italic mt-1.5">
-            {selectedBook === 'Psalm 23' ? 'A Psalm of David.' : 'The Vine and the Branches.'}
-          </p>
+          {chapter?.title && (
+            <p className="text-xs text-charis-text-muted font-serif italic mt-1.5">{chapter.title}</p>
+          )}
         </header>
 
         {/* Verses Container */}
-        <div 
+        <div
           className="mt-8 font-serif leading-[1.75] text-charis-text selection:bg-charis-primary/20 space-y-4"
           style={{ fontSize: `${fontSize}px` }}
         >
-          {verses.map((v) => {
+          {interactiveVerses.map((v) => {
             let highlightStyle = ''
             if (v.isHighlighted) {
               if (v.highlightColor === 'terracotta') {
@@ -155,21 +200,15 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
 
             return (
               <p
-                key={v.verse}
+                key={v.verseNumber}
                 onClick={() => setActiveVerse(v)}
                 className={`group cursor-pointer rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-charis-border-subtle/70 ${highlightStyle}`}
                 tabIndex={0}
                 role="button"
-                aria-label={`Verse ${v.verse}: ${v.text}. Tap for actions.`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setActiveVerse(v)
-                  }
-                }}
+                aria-label={`Verse ${v.verseNumber}: ${v.text}. Tap for actions.`}
               >
                 <sup className="text-xs font-sans font-bold text-charis-primary mr-2 select-none">
-                  {v.verse}
+                  {v.verseNumber}
                 </sup>
                 <span>{v.text}</span>
                 {v.isBookmarked && (
@@ -182,29 +221,26 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
 
         {/* Translation Attribution Footer */}
         <footer className="mt-12 pt-6 border-t border-charis-border/60 text-center">
-          <p className="text-xs text-charis-text-muted">
-            Scripture quotations marked (BSB) are from The Holy Bible, Berean Standard Bible, BSB. Copyright ©2016–2020 by Bible Hub. Used by Permission. All Rights Reserved.
+          <p className="text-xs text-charis-text-muted leading-relaxed max-w-2xl mx-auto">
+            {chapter?.attribution || currentTranslationMeta.attribution}
           </p>
         </footer>
       </article>
 
-      {/* 3. Verse Interaction Bottom Sheet / Modal */}
+      {/* 3. Verse Interaction Modal */}
       <Modal
-        isOpen={!!activeVerse}
+        isOpen={Boolean(activeVerse)}
         onClose={() => setActiveVerse(null)}
-        title={activeVerse ? `${activeVerse.book} ${activeVerse.chapter}:${activeVerse.verse}` : 'Verse Actions'}
-        description="Select an action for this passage"
+        title={activeVerse && chapter ? `${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber}` : 'Verse Actions'}
+        description={`Options for ${currentTranslationMeta.shortName}`}
       >
-        {activeVerse && (
+        {activeVerse && chapter && (
           <div className="space-y-5">
-            {/* Verse snippet */}
             <blockquote className="font-serif italic text-base text-charis-text bg-charis-border-subtle/60 p-4 rounded-xl border-l-2 border-charis-primary">
               “{activeVerse.text}”
             </blockquote>
 
-            {/* Actions list */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Bookmark */}
               <button
                 onClick={() => handleToggleBookmark(activeVerse)}
                 className="flex items-center gap-2 p-3 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-left"
@@ -218,16 +254,11 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
                 </div>
               </button>
 
-              {/* Copy */}
               <button
                 onClick={handleCopy}
                 className="flex items-center gap-2 p-3 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-left"
               >
-                {copiedNotification ? (
-                  <Check className="w-4 h-4 text-emerald-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-charis-text-muted" />
-                )}
+                {copiedNotification ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-charis-text-muted" />}
                 <div>
                   <span className="text-xs font-semibold text-charis-text block">
                     {copiedNotification ? 'Copied!' : 'Copy Verse'}
@@ -237,7 +268,6 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
               </button>
             </div>
 
-            {/* Highlighter selector */}
             <div className="p-3.5 rounded-xl border border-charis-border bg-charis-surface">
               <span className="text-xs font-medium text-charis-text-muted block mb-2 flex items-center gap-1.5">
                 <Highlighter className="w-3.5 h-3.5 text-charis-primary" />
@@ -265,12 +295,11 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
               </div>
             </div>
 
-            {/* Attach Study Note button */}
             <Button
               variant="primary"
               className="w-full gap-2 text-sm"
               onClick={() => {
-                const ref = `${activeVerse.book} ${activeVerse.chapter}:${activeVerse.verse}`
+                const ref = `${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`
                 setActiveVerse(null)
                 if (onAttachStudyNote) {
                   onAttachStudyNote(ref)

@@ -42,12 +42,14 @@ export interface BibleVerse {
 }
 
 export interface BibleChapter {
+  id?: string;                      // e.g. 'web:PSA:23'
   translationId: string;
   bookId: string;
   bookName: string;
   chapterNumber: number;
   verses: BibleVerse[];
   attribution?: string;
+  title?: string;
 }
 
 export interface ScriptureBookmark {
