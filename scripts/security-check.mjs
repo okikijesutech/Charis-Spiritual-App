@@ -19,11 +19,12 @@ function report(status, title, details = '') {
   }
 }
 
-// 1. Scan src/ and dist/ for prohibited secret tokens (service_role)
+// 1. Scan src/ and dist/ for prohibited secret tokens (service_role or sb_secret_)
 function checkClientBundleLeaks() {
   const forbiddenPatterns = [
     { name: 'service_role key reference', regex: /service_role/i },
-    { name: 'Supabase secret key prefix', regex: /sbp_[a-zA-Z0-9_-]{20,}/ },
+    { name: 'Supabase modern secret key prefix (sb_secret_)', regex: /sb_secret_[a-zA-Z0-9_-]{10,}/ },
+    { name: 'Supabase legacy secret key prefix (sbp_)', regex: /sbp_[a-zA-Z0-9_-]{20,}/ },
   ];
 
   const targetDirs = ['src'];
@@ -121,9 +122,9 @@ function checkEnvironmentHygiene() {
   const envExamplePath = '.env.example';
   if (fs.existsSync(envExamplePath)) {
     const envExample = fs.readFileSync(envExamplePath, 'utf-8');
-    // Ensure no service_role env variable definition exists
-    if (/^\s*[A-Z_]*SERVICE_ROLE[A-Z_]*\s*=/im.test(envExample)) {
-      report('FAIL', '.env.example defines a service_role key variable');
+    // Ensure no service_role or secret key env variable definition exists
+    if (/^\s*[A-Z_]*(SERVICE_ROLE|SECRET_KEY)[A-Z_]*\s*=/im.test(envExample)) {
+      report('FAIL', '.env.example defines a service_role or secret key variable');
     } else {
       report('PASS', '.env.example defines only public client-safe variables');
     }
