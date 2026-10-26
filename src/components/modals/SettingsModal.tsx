@@ -3,13 +3,12 @@ import {
   Sun, 
   Moon, 
   Laptop, 
-  CheckCircle2, 
-  Globe, 
   Trash2, 
   Download, 
-  AlertTriangle,
-  LogOut,
-  UserCheck
+  AlertTriangle, 
+  LogOut, 
+  UserCheck,
+  Globe 
 } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
@@ -20,6 +19,7 @@ import { AuthForm } from '../auth/AuthForm'
 import { ThemePreference } from '../../types'
 import { prayerRepository } from '../../lib/db/prayer-repository'
 import { syncQueueManager } from '../../lib/sync/sync-queue'
+import { OfflineTranslationsSection } from '../settings/OfflineTranslationsSection'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -214,25 +214,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Offline Bible Translation Downloads */}
-        <div>
-          <label className="text-xs font-semibold uppercase tracking-wider text-charis-text-muted block mb-2">
-            Offline Bible Translations
-          </label>
-          <div className="space-y-2 border border-charis-border rounded-xl p-3 bg-charis-surface">
-            {mockUserProfile.downloadedTranslations.map((translation) => (
-              <div key={translation} className="flex items-center justify-between py-1.5">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="text-xs font-medium text-charis-text">{translation}</span>
-                </div>
-                <Badge variant="sage" size="sm">Installed (4.2 MB)</Badge>
-              </div>
-            ))}
-          </div>
-          <p className="text-[11px] text-charis-text-muted mt-1.5">
-            Downloaded translations can be read and searched full-text even without an internet connection.
-          </p>
-        </div>
+        <OfflineTranslationsSection />
 
         {/* Shared Device & Local Privacy Warning */}
         <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">

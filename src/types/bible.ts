@@ -77,3 +77,22 @@ export interface ScriptureHighlight {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface TranslationManifest {
+  translationId: string;
+  version: string;
+  name: string;
+  language: string;
+  totalBooks: number;
+  totalChapters: number;
+  approximateSizeBytes: number;
+  checksumSha256: string;
+  publishedAt: string;
+}
+
+export interface TranslationDownloadState {
+  translationId: string;
+  status: 'idle' | 'downloading' | 'validating' | 'completed' | 'failed';
+  progressPercent: number;
+  error?: string | null;
+}
