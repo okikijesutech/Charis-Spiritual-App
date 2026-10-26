@@ -11,10 +11,12 @@ import { exportStudiesToMarkdown } from '../components/journal/StudyExport';
 
 interface StudyJournalViewProps {
   initialScriptureRef?: string;
+  onClearInitialScriptureRef?: () => void;
 }
 
 export const StudyJournalView: React.FC<StudyJournalViewProps> = ({
   initialScriptureRef,
+  onClearInitialScriptureRef,
 }) => {
   const { user } = useAuth();
   const activeUserId = user?.id || 'demo-user-id';
@@ -170,8 +172,12 @@ export const StudyJournalView: React.FC<StudyJournalViewProps> = ({
         onClose={() => {
           setIsEditorOpen(false);
           setEditingStudy(null);
+          onClearInitialScriptureRef?.();
         }}
-        onSave={saveStudy}
+        onSave={(data) => {
+          saveStudy(data);
+          onClearInitialScriptureRef?.();
+        }}
         editingStudy={editingStudy}
         initialScriptureRef={initialScriptureRef}
       />

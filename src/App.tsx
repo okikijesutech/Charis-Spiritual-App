@@ -59,6 +59,7 @@ export const AppContent: React.FC = () => {
       {currentTab === 'study' && (
         <StudyJournalView
           initialScriptureRef={studyInitialRef}
+          onClearInitialScriptureRef={() => setStudyInitialRef(undefined)}
         />
       )}
 
