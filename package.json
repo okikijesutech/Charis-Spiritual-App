@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "security:check": "node scripts/security-check.mjs"
+    "security:check": "node scripts/security-check.mjs",
+    "test:offline": "node scripts/test-offline-sync.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
