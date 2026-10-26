@@ -1,48 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Bookmark, 
-  Highlighter, 
-  Copy, 
-  FileText, 
-  Check, 
   Type, 
   ChevronDown, 
-  CheckCircle2,
-  Globe,
+  ChevronLeft,
+  ChevronRight,
   Search,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react'
 import { bibleProvider } from '../lib/bible/provider'
-import { SUPPORTED_TRANSLATIONS } from '../lib/bible/canon'
+import { CANONICAL_BOOKS, getBookById, SUPPORTED_TRANSLATIONS } from '../lib/bible/canon'
 import { scriptureSearchService, type BibleSearchResult } from '../lib/bible/search'
-import type { BibleChapter, BibleVerse } from '../types/bible'
+import { VerseActionModal, type InteractiveVerse } from '../components/bible/VerseActionModal'
+import type { BibleChapter } from '../types/bible'
 import { Badge } from '../components/ui/Badge'
 import { Modal } from '../components/ui/Modal'
-import { Button } from '../components/ui/Button'
 
 interface BibleViewProps {
   onAttachStudyNote?: (verseRef: string) => void
 }
 
-interface InteractiveVerse extends BibleVerse {
-  isBookmarked?: boolean;
-  isHighlighted?: boolean;
-  highlightColor?: 'terracotta' | 'sage' | 'amber';
-}
-
-const AVAILABLE_PASSAGES: { id: string; label: string; bookId: string; chapter: number }[] = [
-  { id: 'PSA:23', label: 'Psalm 23', bookId: 'PSA', chapter: 23 },
-  { id: 'JHN:15', label: 'John 15', bookId: 'JHN', chapter: 15 },
-  { id: 'ROM:8', label: 'Romans 8', bookId: 'ROM', chapter: 8 },
-]
-
 export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
-  const [selectedTranslation, setSelectedTranslation] = useState<string>('web')
-  const [selectedPassageId, setSelectedPassageId] = useState<string>('PSA:23')
+  const [selectedTranslation, setSelectedTranslation] = useState<string>('nlt')
+  const [selectedBookId, setSelectedBookId] = useState<string>('PSA')
+  const [selectedChapterNumber, setSelectedChapterNumber] = useState<number>(23)
   const [fontSize, setFontSize] = useState<number>(18)
   const [chapter, setChapter] = useState<BibleChapter | null>(null)
   const [interactiveVerses, setInteractiveVerses] = useState<InteractiveVerse[]>([])
   const [activeVerse, setActiveVerse] = useState<InteractiveVerse | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [copiedNotification, setCopiedNotification] = useState(false)
 
   // Search state
@@ -50,20 +37,43 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([])
 
-  const activePassage = AVAILABLE_PASSAGES.find((p) => p.id === selectedPassageId) || AVAILABLE_PASSAGES[0]
+  const currentBook = getBookById(selectedBookId) || CANONICAL_BOOKS[18] // Psalm default
   const currentTranslationMeta = SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0]
 
   useEffect(() => {
     let isMounted = true
-    bibleProvider.getChapter(selectedTranslation, activePassage.bookId, activePassage.chapter).then((res) => {
+    setIsLoading(true)
+
+    bibleProvider.getChapter(selectedTranslation, selectedBookId, selectedChapterNumber).then((res) => {
       if (isMounted) {
         setChapter(res)
         setInteractiveVerses(res.verses.map((v) => ({ ...v })))
         setActiveVerse(null)
+        setIsLoading(false)
       }
+    }).catch(() => {
+      if (isMounted) setIsLoading(false)
     })
+
     return () => { isMounted = false }
-  }, [selectedTranslation, activePassage.bookId, activePassage.chapter])
+  }, [selectedTranslation, selectedBookId, selectedChapterNumber])
+
+  const handleBookChange = (bookId: string) => {
+    setSelectedBookId(bookId)
+    setSelectedChapterNumber(1)
+  }
+
+  const handlePrevChapter = () => {
+    if (selectedChapterNumber > 1) {
+      setSelectedChapterNumber(prev => prev - 1)
+    }
+  }
+
+  const handleNextChapter = () => {
+    if (selectedChapterNumber < currentBook.chapterCount) {
+      setSelectedChapterNumber(prev => prev + 1)
+    }
+  }
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q)
@@ -76,11 +86,8 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
   }
 
   const handleSelectSearchResult = (res: BibleSearchResult) => {
-    const passageKey = `${res.reference.bookId}:${res.reference.chapter}`
-    const existing = AVAILABLE_PASSAGES.find((p) => p.id === passageKey)
-    if (existing) {
-      setSelectedPassageId(existing.id)
-    }
+    setSelectedBookId(res.reference.bookId)
+    setSelectedChapterNumber(res.reference.chapter)
     setIsSearchOpen(false)
     setSearchQuery('')
     setSearchResults([])
@@ -100,11 +107,7 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
     setInteractiveVerses((prev) =>
       prev.map((item) =>
         item.verseNumber === activeVerse.verseNumber
-          ? {
-              ...item,
-              isHighlighted: color !== 'none',
-              highlightColor: color !== 'none' ? color : undefined,
-            }
+          ? { ...item, isHighlighted: color !== 'none', highlightColor: color !== 'none' ? color : undefined }
           : item
       )
     )
@@ -123,25 +126,64 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* 1. Reader Toolbar */}
+    <div className="space-y-6">
+      {/* 1. Reader Navigation Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-charis-surface border border-charis-border shadow-subtle">
-        {/* Book, Chapter, Translation Selectors & Search */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Passage Select */}
+          {/* Book Selector (All 66 Books) */}
           <div className="relative inline-block">
             <select
-              value={selectedPassageId}
-              onChange={(e) => setSelectedPassageId(e.target.value)}
+              value={selectedBookId}
+              onChange={(e) => handleBookChange(e.target.value)}
               className="appearance-none font-serif font-bold text-sm sm:text-base bg-charis-surface text-charis-text border border-charis-border rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA]"
             >
-              {AVAILABLE_PASSAGES.map((p) => (
-                <option key={p.id} value={p.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
-                  {p.label}
+              <optgroup label="Old Testament">
+                {CANONICAL_BOOKS.filter((b) => b.testament === 'OT').map((b) => (
+                  <option key={b.id} value={b.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
+                    {b.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="New Testament">
+                {CANONICAL_BOOKS.filter((b) => b.testament === 'NT').map((b) => (
+                  <option key={b.id} value={b.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
+                    {b.name}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <ChevronDown className="w-4 h-4 text-charis-text-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
+          {/* Chapter Selector & Stepper */}
+          <div className="flex items-center gap-1 border border-charis-border rounded-xl px-1.5 py-1 bg-charis-surface dark:bg-[#1B1E2B]">
+            <button
+              onClick={handlePrevChapter}
+              disabled={selectedChapterNumber <= 1}
+              className="p-1 rounded text-charis-text hover:bg-charis-border-subtle disabled:opacity-30 disabled:pointer-events-none"
+              title="Previous chapter"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <select
+              value={selectedChapterNumber}
+              onChange={(e) => setSelectedChapterNumber(parseInt(e.target.value, 10))}
+              className="appearance-none font-sans font-semibold text-xs bg-transparent text-charis-text px-2 py-0.5 focus:outline-none cursor-pointer dark:text-[#F3EFEA]"
+            >
+              {Array.from({ length: currentBook.chapterCount }, (_, i) => i + 1).map((ch) => (
+                <option key={ch} value={ch} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA]">
+                  Ch {ch}
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-charis-text-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <button
+              onClick={handleNextChapter}
+              disabled={selectedChapterNumber >= currentBook.chapterCount}
+              className="p-1 rounded text-charis-text hover:bg-charis-border-subtle disabled:opacity-30 disabled:pointer-events-none"
+              title="Next chapter"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Translation Select */}
@@ -163,26 +205,12 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
           {/* Quick Search Button */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text transition-colors flex items-center gap-1.5 text-xs shadow-subtle"
-            title="Search Scripture passages and topics"
+            className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text transition-colors flex items-center gap-1.5 text-xs shadow-subtle dark:bg-[#1B1E2B]"
+            title="Search all 66 books or topics"
           >
             <Search className="w-3.5 h-3.5 text-charis-primary" />
             <span className="hidden md:inline">Search</span>
           </button>
-
-          <Badge variant={currentTranslationMeta.offlineDownloadable ? "sage" : "outline"} size="sm" className="hidden sm:inline-flex items-center gap-1">
-            {currentTranslationMeta.offlineDownloadable ? (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Offline Ready</span>
-              </>
-            ) : (
-              <>
-                <Globe className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                <span>API Licensed</span>
-              </>
-            )}
-          </Badge>
         </div>
 
         {/* Font Size Adjuster */}
@@ -191,8 +219,6 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
           <button
             onClick={() => setFontSize((prev) => Math.max(15, prev - 1))}
             className="w-7 h-7 flex items-center justify-center rounded text-xs font-semibold hover:bg-charis-border text-charis-text transition-colors"
-            title="Decrease font size"
-            aria-label="Decrease text size"
           >
             A-
           </button>
@@ -200,8 +226,6 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
           <button
             onClick={() => setFontSize((prev) => Math.min(26, prev + 1))}
             className="w-7 h-7 flex items-center justify-center rounded text-sm font-semibold hover:bg-charis-border text-charis-text transition-colors"
-            title="Increase font size"
-            aria-label="Increase text size"
           >
             A+
           </button>
@@ -209,13 +233,27 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
       </div>
 
       {/* 2. Scripture Reading Surface */}
-      <article className="rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 shadow-card">
+      <article className="rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 shadow-card relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-charis-surface/60 backdrop-blur-[2px] flex items-center justify-center rounded-2xl z-20">
+            <div className="flex items-center gap-2 text-sm text-charis-primary font-medium">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Loading chapter...</span>
+            </div>
+          </div>
+        )}
+
         <header className="text-center pb-8 border-b border-charis-border/60">
-          <span className="text-xs font-semibold tracking-wider uppercase text-charis-primary">
-            {currentTranslationMeta.name} ({currentTranslationMeta.shortName})
-          </span>
+          <div className="flex items-center justify-center gap-2 mb-1.5">
+            <span className="text-xs font-semibold tracking-wider uppercase text-charis-primary">
+              {currentTranslationMeta.name} ({currentTranslationMeta.shortName})
+            </span>
+            <Badge variant={currentTranslationMeta.offlineDownloadable ? "sage" : "outline"} size="sm">
+              {currentTranslationMeta.offlineDownloadable ? "Offline Ready" : "Online API"}
+            </Badge>
+          </div>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-charis-text mt-1">
-            {chapter ? `${chapter.bookName} ${chapter.chapterNumber}` : activePassage.label}
+            {chapter ? `${chapter.bookName} ${chapter.chapterNumber}` : `${currentBook.name} ${selectedChapterNumber}`}
           </h2>
           {chapter?.title && (
             <p className="text-xs text-charis-text-muted font-serif italic mt-1.5">{chapter.title}</p>
@@ -230,13 +268,9 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
           {interactiveVerses.map((v) => {
             let highlightStyle = ''
             if (v.isHighlighted) {
-              if (v.highlightColor === 'terracotta') {
-                highlightStyle = 'bg-[#D95740]/15 dark:bg-[#E06D58]/20 px-1 rounded'
-              } else if (v.highlightColor === 'sage') {
-                highlightStyle = 'bg-[#78866B]/15 dark:bg-[#8E9E80]/20 px-1 rounded'
-              } else {
-                highlightStyle = 'bg-amber-400/20 px-1 rounded'
-              }
+              if (v.highlightColor === 'terracotta') highlightStyle = 'bg-[#D95740]/15 dark:bg-[#E06D58]/20 px-1 rounded'
+              else if (v.highlightColor === 'sage') highlightStyle = 'bg-[#78866B]/15 dark:bg-[#8E9E80]/20 px-1 rounded'
+              else highlightStyle = 'bg-amber-400/20 px-1 rounded'
             }
 
             return (
@@ -246,7 +280,6 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
                 className={`group cursor-pointer rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-charis-border-subtle/70 ${highlightStyle}`}
                 tabIndex={0}
                 role="button"
-                aria-label={`Verse ${v.verseNumber}: ${v.text}. Tap for actions.`}
               >
                 <sup className="text-xs font-sans font-bold text-charis-primary mr-2 select-none">
                   {v.verseNumber}
@@ -260,8 +293,31 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
           })}
         </div>
 
+        {/* Chapter Bottom Navigation Stepper */}
+        <div className="mt-10 pt-6 border-t border-charis-border/60 flex items-center justify-between">
+          <button
+            onClick={handlePrevChapter}
+            disabled={selectedChapterNumber <= 1}
+            className="flex items-center gap-1.5 text-xs font-medium text-charis-text-muted hover:text-charis-text disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Previous Chapter</span>
+          </button>
+          <span className="text-xs text-charis-text-muted font-sans font-medium">
+            {currentBook.name} {selectedChapterNumber} of {currentBook.chapterCount}
+          </span>
+          <button
+            onClick={handleNextChapter}
+            disabled={selectedChapterNumber >= currentBook.chapterCount}
+            className="flex items-center gap-1.5 text-xs font-medium text-charis-text-muted hover:text-charis-text disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <span>Next Chapter</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
         {/* Translation Attribution Footer */}
-        <footer className="mt-12 pt-6 border-t border-charis-border/60 text-center">
+        <footer className="mt-8 text-center">
           <p className="text-xs text-charis-text-muted leading-relaxed max-w-2xl mx-auto">
             {chapter?.attribution || currentTranslationMeta.attribution}
           </p>
@@ -272,28 +328,25 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
       <Modal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        title="Search Scripture & Topics"
-        description="Search passages (e.g. 'John 15', 'Rom 8') or topics like 'peace' or 'comfort'"
+        title="Search All 66 Books & Topics"
+        description="Search passages (e.g. 'John 3', 'Romans 8', 'Genesis 1') or topics"
       >
         <div className="space-y-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Search passage, word or topic..."
-              autoFocus
-              className="w-full px-3.5 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-charis-text focus:outline-none focus:ring-2 focus:ring-charis-primary text-sm shadow-subtle"
-            />
-          </div>
-
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Type book, chapter, or topic..."
+            autoFocus
+            className="w-full px-3.5 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-charis-text focus:outline-none focus:ring-2 focus:ring-charis-primary text-sm shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA]"
+          />
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {searchResults.length > 0 ? (
               searchResults.map((res, idx) => (
                 <button
                   key={`${res.formattedRef}-${idx}`}
                   onClick={() => handleSelectSearchResult(res)}
-                  className="w-full p-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-left transition-colors flex items-start gap-2.5"
+                  className="w-full p-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-left transition-colors flex items-start gap-2.5 dark:bg-[#1B1E2B]"
                 >
                   <Sparkles className="w-4 h-4 text-charis-primary shrink-0 mt-0.5" />
                   <div>
@@ -308,7 +361,7 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
               ))
             ) : searchQuery.trim() ? (
               <p className="text-xs text-charis-text-muted text-center py-4">
-                No matching passages found. Try searching &quot;peace&quot;, &quot;comfort&quot;, or &quot;John 15&quot;.
+                No matching passages found. Try &quot;peace&quot;, &quot;John 3&quot;, or &quot;Romans 8&quot;.
               </p>
             ) : (
               <div className="text-xs text-charis-text-muted space-y-1.5 p-2">
@@ -318,7 +371,7 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
                     <button
                       key={t}
                       onClick={() => handleSearch(t)}
-                      className="px-2.5 py-1 rounded-lg border border-charis-border bg-charis-surface hover:bg-charis-border-subtle capitalize"
+                      className="px-2.5 py-1 rounded-lg border border-charis-border bg-charis-surface hover:bg-charis-border-subtle capitalize dark:bg-[#1B1E2B]"
                     >
                       {t}
                     </button>
@@ -331,90 +384,17 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
       </Modal>
 
       {/* 4. Verse Interaction Modal */}
-      <Modal
-        isOpen={Boolean(activeVerse)}
+      <VerseActionModal
+        activeVerse={activeVerse}
+        chapter={chapter}
+        translationShortName={currentTranslationMeta.shortName}
+        copiedNotification={copiedNotification}
         onClose={() => setActiveVerse(null)}
-        title={activeVerse && chapter ? `${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber}` : 'Verse Actions'}
-        description={`Options for ${currentTranslationMeta.shortName}`}
-      >
-        {activeVerse && chapter && (
-          <div className="space-y-5">
-            <blockquote className="font-serif italic text-base text-charis-text bg-charis-border-subtle/60 p-4 rounded-xl border-l-2 border-charis-primary">
-              “{activeVerse.text}”
-            </blockquote>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleToggleBookmark(activeVerse)}
-                className="flex items-center gap-2 p-3 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-left"
-              >
-                <Bookmark className={`w-4 h-4 ${activeVerse.isBookmarked ? 'text-charis-primary fill-current' : 'text-charis-text-muted'}`} />
-                <div>
-                  <span className="text-xs font-semibold text-charis-text block">
-                    {activeVerse.isBookmarked ? 'Bookmarked' : 'Bookmark'}
-                  </span>
-                  <span className="text-[10px] text-charis-text-muted">Save to library</span>
-                </div>
-              </button>
-
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-2 p-3 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-left"
-              >
-                {copiedNotification ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-charis-text-muted" />}
-                <div>
-                  <span className="text-xs font-semibold text-charis-text block">
-                    {copiedNotification ? 'Copied!' : 'Copy Verse'}
-                  </span>
-                  <span className="text-[10px] text-charis-text-muted">With attribution</span>
-                </div>
-              </button>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-charis-border bg-charis-surface">
-              <span className="text-xs font-medium text-charis-text-muted block mb-2 flex items-center gap-1.5">
-                <Highlighter className="w-3.5 h-3.5 text-charis-primary" />
-                Highlight Accent
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleHighlight('terracotta')}
-                  className="flex-1 py-1.5 px-2 rounded-lg bg-[#D95740]/15 dark:bg-[#E06D58]/20 text-[#D95740] dark:text-[#E06D58] text-xs font-medium border border-[#D95740]/30 hover:brightness-105"
-                >
-                  Terracotta
-                </button>
-                <button
-                  onClick={() => handleHighlight('sage')}
-                  className="flex-1 py-1.5 px-2 rounded-lg bg-[#78866B]/15 dark:bg-[#8E9E80]/20 text-[#78866B] dark:text-[#8E9E80] text-xs font-medium border border-[#78866B]/30 hover:brightness-105"
-                >
-                  Sage
-                </button>
-                <button
-                  onClick={() => handleHighlight('none')}
-                  className="py-1.5 px-3 rounded-lg border border-charis-border text-charis-text-muted text-xs hover:bg-charis-border-subtle"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            <Button
-              variant="primary"
-              className="w-full gap-2 text-sm"
-              onClick={() => {
-                const ref = `${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`
-                setActiveVerse(null)
-                if (onAttachStudyNote) {
-                  onAttachStudyNote(ref)
-                }
-              }}
-            >
-              <FileText className="w-4 h-4" />
-              <span>Create Inductive Study from Verse</span>
-            </Button>
-          </div>
-        )}
-      </Modal>
+        onToggleBookmark={handleToggleBookmark}
+        onCopy={handleCopy}
+        onHighlight={handleHighlight}
+        onAttachStudyNote={onAttachStudyNote}
+      />
     </div>
   )
 }

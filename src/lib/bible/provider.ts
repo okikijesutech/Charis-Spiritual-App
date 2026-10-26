@@ -7,6 +7,7 @@
 import { getDB } from '../db/indexeddb';
 import { SAMPLE_CHAPTERS } from './sample-scripture';
 import { getBookById, SUPPORTED_TRANSLATIONS } from './canon';
+import { remoteBibleApiAdapter } from './api-adapter';
 import type { BibleChapter } from '../../types/bible';
 
 export interface IBibleProvider {
@@ -44,6 +45,18 @@ export class CharisBibleProvider implements IBibleProvider {
     );
     if (sample) {
       return sample;
+    }
+
+    // 3. Online Fetch: Retrieve complete chapter for any book (1-66) in NLT, KJV, or WEB
+    if (typeof navigator === 'undefined' || navigator.onLine) {
+      const remoteChapter = await remoteBibleApiAdapter.fetchRemoteChapter(
+        translationId,
+        bookId,
+        chapterNumber
+      );
+      if (remoteChapter) {
+        return remoteChapter;
+      }
     }
 
     // 3. Fallback: If not found in target translation, try World English Bible (WEB default)
