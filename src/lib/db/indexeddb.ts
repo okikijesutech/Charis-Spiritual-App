@@ -11,9 +11,10 @@ import type { BibleChapter } from '../../types/bible';
 import type { ActivityLog, ActivityType } from '../../types/activity';
 import type { ReadingPlan, ReadingPlanAssignment } from '../../types/plan';
 import type { Schedule, SchedulePreset } from '../../types/schedule';
+import type { LocalUserSettings } from '../../types/settings';
 
 export const DB_NAME = 'charis_local_db';
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 export interface InstalledTranslation {
   translationId: string;
@@ -125,6 +126,10 @@ export interface CharisDBSchema extends DBSchema {
       'by-user': string;
     };
   };
+  user_settings: {
+    key: string; // userId
+    value: LocalUserSettings;
+  };
 }
 
 let dbInstance: IDBPDatabase<CharisDBSchema> | null = null;
@@ -216,6 +221,13 @@ export async function getDB(): Promise<IDBPDatabase<CharisDBSchema>> {
         if (!db.objectStoreNames.contains('schedule_presets')) {
           const presetStore = db.createObjectStore('schedule_presets', { keyPath: 'id' });
           presetStore.createIndex('by-user', 'userId', { unique: false });
+        }
+      }
+
+      // Version 4: User settings (dashboard layout, reminder preferences)
+      if (oldVersion < 4) {
+        if (!db.objectStoreNames.contains('user_settings')) {
+          db.createObjectStore('user_settings', { keyPath: 'userId' });
         }
       }
     },

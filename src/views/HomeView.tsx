@@ -1,33 +1,81 @@
-import React from 'react'
-import { 
-  BookOpen, 
-  Heart, 
-  BookMarked, 
-  Sparkles,
-  Bookmark,
-  CalendarCheck
-} from 'lucide-react'
-import { 
-  mockUserProfile 
-} from '../data/mockData'
-import { RecentActivitySection } from '../components/home/RecentActivitySection'
-import { FeaturedReadingSection } from '../components/home/FeaturedReadingSection'
-import { FastingTimerWidget } from '../components/home/FastingTimerWidget'
+import React, { useState } from 'react';
+import { Sparkles, SlidersHorizontal } from 'lucide-react';
+import { mockUserProfile } from '../data/mockData';
+import { RecentActivitySection } from '../components/home/RecentActivitySection';
+import { FeaturedReadingSection } from '../components/home/FeaturedReadingSection';
+import { FastingTimerWidget } from '../components/home/FastingTimerWidget';
+import { VerseReflectionWidget } from '../components/home/VerseReflectionWidget';
+import { QuickActionsSection } from '../components/home/QuickActionsSection';
+import { DashboardCustomizerModal } from '../components/dashboard/DashboardCustomizerModal';
+import { useUserSettings } from '../hooks/useUserSettings';
 import { useAuth } from '../context/AuthContext';
-import { NavDestination } from '../types'
-import { Badge } from '../components/ui/Badge'
+import { NavDestination } from '../types';
+import { Badge } from '../components/ui/Badge';
 
 interface HomeViewProps {
-  onNavigate: (tab: NavDestination) => void
-  onOpenQuickAction: () => void
+  onNavigate: (tab: NavDestination) => void;
+  onOpenQuickAction: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
-  onOpenQuickAction
+  onOpenQuickAction,
 }) => {
   const { profile, user } = useAuth();
   const activeUserId = user?.id || 'demo-user-id';
+  const [isCustomizing, setIsCustomizing] = useState<boolean>(false);
+
+  const {
+    layout,
+    toggleWidgetVisibility,
+    moveWidget,
+    resetLayout,
+  } = useUserSettings(activeUserId);
+
+  const renderWidget = (widgetId: string) => {
+    switch (widgetId) {
+      case 'featured_reading':
+        return (
+          <FeaturedReadingSection
+            key="featured_reading"
+            userId={activeUserId}
+            onNavigate={onNavigate}
+          />
+        );
+      case 'quick_actions':
+        return (
+          <QuickActionsSection
+            key="quick_actions"
+            onNavigate={onNavigate}
+            onOpenQuickAction={onOpenQuickAction}
+          />
+        );
+      case 'verse_reflection':
+        return (
+          <div key="verse_reflection" className="w-full">
+            <VerseReflectionWidget onNavigate={onNavigate} />
+          </div>
+        );
+      case 'fasting_timer':
+        return (
+          <div key="fasting_timer" className="w-full">
+            <FastingTimerWidget userId={activeUserId} />
+          </div>
+        );
+      case 'recent_activity':
+        return (
+          <RecentActivitySection
+            key="recent_activity"
+            userId={activeUserId}
+            onOpenQuickAction={onOpenQuickAction}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  const visibleWidgets = layout.widgets.filter((w) => w.visible);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -51,104 +99,32 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <span className="w-2 h-2 rounded-full bg-[#78866B] animate-pulse mr-1" />
             4 spiritual rhythms active
           </Badge>
-        </div>
-      </section>
-
-      {/* 2. Priority Featured Reading Card */}
-      <FeaturedReadingSection
-        userId={activeUserId}
-        onNavigate={onNavigate}
-      />
-
-      {/* 3. Quick Actions Grid */}
-      <section aria-label="Quick Actions">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-charis-text-muted mb-3">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <button
-            onClick={() => onNavigate('bible')}
-            className="flex flex-col items-center sm:items-start p-4 rounded-2xl bg-charis-surface border border-charis-border hover:border-charis-primary/50 hover:bg-charis-border-subtle/40 transition-all text-left group"
-          >
-            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 mb-2 group-hover:scale-105 transition-transform">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-semibold text-charis-text">Read Bible</span>
-            <span className="text-[11px] text-charis-text-muted mt-0.5">Psalm 23 & John</span>
-          </button>
 
           <button
-            onClick={() => onNavigate('prayer')}
-            className="flex flex-col items-center sm:items-start p-4 rounded-2xl bg-charis-surface border border-charis-border hover:border-charis-primary/50 hover:bg-charis-border-subtle/40 transition-all text-left group"
+            onClick={() => setIsCustomizing(true)}
+            aria-label="Customize dashboard cards"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text transition-colors shadow-subtle"
           >
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 mb-2 group-hover:scale-105 transition-transform">
-              <Heart className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-semibold text-charis-text">New Prayer</span>
-            <span className="text-[11px] text-charis-text-muted mt-0.5">Prompt or blank</span>
-          </button>
-
-          <button
-            onClick={() => onNavigate('study')}
-            className="flex flex-col items-center sm:items-start p-4 rounded-2xl bg-charis-surface border border-charis-border hover:border-charis-primary/50 hover:bg-charis-border-subtle/40 transition-all text-left group"
-          >
-            <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 mb-2 group-hover:scale-105 transition-transform">
-              <BookMarked className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-semibold text-charis-text">Bible Study</span>
-            <span className="text-[11px] text-charis-text-muted mt-0.5">Inductive / SOAP</span>
-          </button>
-
-          <button
-            onClick={onOpenQuickAction}
-            className="flex flex-col items-center sm:items-start p-4 rounded-2xl bg-charis-surface border border-charis-border hover:border-charis-primary/50 hover:bg-charis-border-subtle/40 transition-all text-left group"
-          >
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 mb-2 group-hover:scale-105 transition-transform">
-              <CalendarCheck className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-semibold text-charis-text">Log Activity</span>
-            <span className="text-[11px] text-charis-text-muted mt-0.5">Prayer, study, fast</span>
+            <SlidersHorizontal className="w-3.5 h-3.5 text-charis-primary" />
+            <span>Customize</span>
           </button>
         </div>
       </section>
 
-      {/* 4. Modular Dashboard Widgets */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Widget A: Scripture of the Day Meditation */}
-        <div className="rounded-2xl bg-charis-surface border border-charis-border p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-charis-primary uppercase tracking-wider flex items-center gap-1.5">
-                <Bookmark className="w-3.5 h-3.5" />
-                Verse Reflection
-              </span>
-              <span className="text-xs text-charis-text-muted font-serif">Psalm 23:2–3</span>
-            </div>
-            <blockquote className="font-serif italic text-base sm:text-lg text-charis-text leading-relaxed pl-3 border-l-2 border-[#D95740] dark:border-[#E06D58] my-3">
-              “He makes me lie down in green pastures; He leads me beside quiet waters. He restores my soul.”
-            </blockquote>
-          </div>
+      {/* 2. Dynamically Ordered Dashboard Cards */}
+      <div className="space-y-6">
+        {visibleWidgets.map((widget) => renderWidget(widget.id))}
+      </div>
 
-          <div className="pt-4 border-t border-charis-border/60 flex items-center justify-between">
-            <span className="text-xs text-charis-text-muted">Berean Standard Bible</span>
-            <button 
-              onClick={() => onNavigate('bible')}
-              className="text-xs font-medium text-charis-primary hover:underline"
-            >
-              Read full chapter →
-            </button>
-          </div>
-        </div>
-
-        {/* Widget B: Fasting Rhythm Timer */}
-        <FastingTimerWidget userId={activeUserId} />
-      </section>
-
-      {/* 5. Gentle Activity Summary (Grace over Streaks) */}
-      <RecentActivitySection
-        userId={user?.id || 'demo-user-id'}
-        onOpenQuickAction={onOpenQuickAction}
+      {/* 3. Dashboard Customizer Modal */}
+      <DashboardCustomizerModal
+        isOpen={isCustomizing}
+        onClose={() => setIsCustomizing(false)}
+        widgets={layout.widgets}
+        onToggleVisibility={toggleWidgetVisibility}
+        onMoveWidget={moveWidget}
+        onReset={resetLayout}
       />
     </div>
-  )
-}
+  );
+};

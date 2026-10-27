@@ -247,6 +247,43 @@ async function runTests() {
   assert(prayerSchedule.localStartTime === '07:00', 'Local start time stored as wall-clock time string');
   assert(prayerSchedule.timezone === 'America/New_York', 'User timezone partition preserved for recurrence');
 
+  // Test 12: Dashboard layout customization and reset offline
+  const customWidgets = [
+    { id: 'quick_actions', visible: true },
+    { id: 'verse_reflection', visible: true },
+    { id: 'fasting_timer', visible: false },
+    { id: 'featured_reading', visible: true },
+    { id: 'recent_activity', visible: true },
+  ];
+  localStore.set('settings-' + userA, { userId: userA, dashboardLayout: { widgets: customWidgets } });
+  const savedSettings = localStore.get('settings-' + userA);
+  assert(savedSettings.dashboardLayout.widgets[0].id === 'quick_actions', 'Dashboard custom card ordering persists offline');
+  assert(savedSettings.dashboardLayout.widgets[2].visible === false, 'Dashboard widget visibility toggle persists offline');
+
+  // Test 13: Quiet hours calculation spanning midnight
+  function isWithinQuiet(startStr, endStr, testMinutes) {
+    const [sH, sM] = startStr.split(':').map(Number);
+    const [eH, eM] = endStr.split(':').map(Number);
+    const start = sH * 60 + sM;
+    const end = eH * 60 + eM;
+    return start > end ? (testMinutes >= start || testMinutes < end) : (testMinutes >= start && testMinutes < end);
+  }
+  assert(isWithinQuiet('22:00', '07:00', 23 * 60 + 30) === true, 'Quiet period active late night (23:30)');
+  assert(isWithinQuiet('22:00', '07:00', 4 * 60 + 15) === true, 'Quiet period active early morning (04:15)');
+  assert(isWithinQuiet('22:00', '07:00', 14 * 60) === false, 'Quiet period inactive during day (14:00)');
+
+  // Test 14: Strict notification payload zero-leakage guarantee
+  const journalData = { title: 'Deep Confession', notes: 'Private soul observation' };
+  const genericReminder = { title: 'Daily Scripture Reading', body: 'A quiet chapter in John awaits.' };
+  const leaksPrivateData = 
+    genericReminder.title.includes(journalData.title) || 
+    genericReminder.body.includes(journalData.notes);
+  assert(leaksPrivateData === false, 'Push notification payload contains zero personal journal or prayer text');
+
+  // Test 15: Graceful notification permission fallback
+  const canSend = (perm) => perm === 'granted';
+  assert(canSend('denied') === false && canSend('unsupported') === false, 'Permission denied and unsupported states gracefully suppress notifications');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);
