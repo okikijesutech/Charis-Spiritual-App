@@ -5,8 +5,10 @@
  */
 
 import type { BibleChapter } from '../../types/bible';
+import { GENESIS_1_CHAPTERS } from './samples/genesis-1';
 
 export const SAMPLE_CHAPTERS: BibleChapter[] = [
+  ...GENESIS_1_CHAPTERS,
   // ---------------------------------------------------------------------------
   // 1. Psalm 23
   // ---------------------------------------------------------------------------

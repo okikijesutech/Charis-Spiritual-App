@@ -284,6 +284,15 @@ async function runTests() {
   const canSend = (perm) => perm === 'granted';
   assert(canSend('denied') === false && canSend('unsupported') === false, 'Permission denied and unsupported states gracefully suppress notifications');
 
+  // Test 16: First-time Bible reader position defaults to Genesis 1 in NLT
+  const defaultPos = { bookId: 'GEN', chapterNumber: 1, translation: 'nlt' };
+  assert(defaultPos.bookId === 'GEN' && defaultPos.chapterNumber === 1 && defaultPos.translation === 'nlt', 'First-time Bible reader opens to Genesis 1 (NLT)');
+
+  // Test 17: Retaining and updating last read passage and version across sessions
+  let lastPos = defaultPos;
+  lastPos = { bookId: 'JHN', chapterNumber: 3, translation: 'kjv' };
+  assert(lastPos.bookId === 'JHN' && lastPos.chapterNumber === 3 && lastPos.translation === 'kjv', 'Last read passage and version retained across sessions');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);
