@@ -63,7 +63,7 @@ export class RemoteBibleApiAdapter {
   }
 
   /**
-   * Fetch NLT chapter via Bible-Go API
+   * Fetch NLT chapter via Bolls Life API (with CORS support) and fallback to Bible-Go API
    */
   private async fetchNltChapter(
     bookOrder: number,
@@ -71,33 +71,71 @@ export class RemoteBibleApiAdapter {
     bookName: string,
     chapterNumber: number
   ): Promise<BibleChapter | null> {
-    const url = `https://bible-go-api.rkeplin.com/v1/books/${bookOrder}/chapters/${chapterNumber}?translation=NLT`;
-    const response = await fetch(url);
-    if (!response.ok) return null;
+    // 1. Primary: Bolls Life API (provides Access-Control-Allow-Origin: * for browser PWAs)
+    try {
+      const bollsUrl = `https://bolls.life/get-chapter/NLT/${bookOrder}/${chapterNumber}/`;
+      const response = await fetch(bollsUrl);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const verses: BibleVerse[] = data.map((item: any, index: number) => ({
+            verseNumber: item.verse,
+            text: (item.text || '').replace(/<[^>]*>/g, '').trim(),
+            isParagraphStart: index === 0 || index % 4 === 0,
+          }));
 
-    const data: BibleGoVerseItem[] = await response.json();
-    if (!Array.isArray(data) || data.length === 0) return null;
+          const chapter: BibleChapter = {
+            id: `nlt:${bookId.toUpperCase()}:${chapterNumber}`,
+            translationId: 'nlt',
+            bookId,
+            bookName,
+            chapterNumber,
+            title: `${bookName} ${chapterNumber}`,
+            attribution: 'Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers.',
+            verses,
+          };
 
-    const verses: BibleVerse[] = data.map((item, index) => ({
-      verseNumber: item.verseId,
-      text: item.verse.replace(/^["'\s]+|["'\s]+$/g, ''),
-      isParagraphStart: index === 0 || index % 4 === 0,
-    }));
+          await this.cacheChapterLocally(chapter);
+          return chapter;
+        }
+      }
+    } catch {
+      // Fall through to secondary provider
+    }
 
-    const chapter: BibleChapter = {
-      id: `nlt:${bookId.toUpperCase()}:${chapterNumber}`,
-      translationId: 'nlt',
-      bookId,
-      bookName,
-      chapterNumber,
-      title: `${bookName} ${chapterNumber}`,
-      attribution: 'Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers.',
-      verses,
-    };
+    // 2. Secondary fallback: Bible-Go API
+    try {
+      const url = `https://bible-go-api.rkeplin.com/v1/books/${bookOrder}/chapters/${chapterNumber}?translation=NLT`;
+      const response = await fetch(url);
+      if (response.ok) {
+        const data: BibleGoVerseItem[] = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const verses: BibleVerse[] = data.map((item, index) => ({
+            verseNumber: item.verseId,
+            text: item.verse.replace(/^["'\s]+|["'\s]+$/g, ''),
+            isParagraphStart: index === 0 || index % 4 === 0,
+          }));
 
-    // Automatically cache locally in IndexedDB for offline reading
-    await this.cacheChapterLocally(chapter);
-    return chapter;
+          const chapter: BibleChapter = {
+            id: `nlt:${bookId.toUpperCase()}:${chapterNumber}`,
+            translationId: 'nlt',
+            bookId,
+            bookName,
+            chapterNumber,
+            title: `${bookName} ${chapterNumber}`,
+            attribution: 'Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers.',
+            verses,
+          };
+
+          await this.cacheChapterLocally(chapter);
+          return chapter;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+
+    return null;
   }
 
   /**
