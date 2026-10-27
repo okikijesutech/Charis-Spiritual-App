@@ -8,6 +8,7 @@ import type { ProfilesTable, UserSettingsTable, SyncReceiptsTable, Json } from '
 import type { PrayerEntriesTable, StudyEntriesTable } from './tables/journal-tables';
 import type { ActivityTypesTable, ActivityLogsTable } from './tables/activity-tables';
 import type { ReadingPlansTable, ReadingPlanAssignmentsTable } from './tables/plan-tables';
+import type { SchedulesTable, SchedulePresetsTable } from './tables/schedule-tables';
 
 export type { Json };
 
@@ -22,6 +23,8 @@ export interface Database {
       activity_logs: ActivityLogsTable;
       reading_plans: ReadingPlansTable;
       reading_plan_assignments: ReadingPlanAssignmentsTable;
+      schedules: SchedulesTable;
+      schedule_presets: SchedulePresetsTable;
       sync_receipts: SyncReceiptsTable;
     };
     Views: {

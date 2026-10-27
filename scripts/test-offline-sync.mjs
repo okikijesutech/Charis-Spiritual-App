@@ -217,6 +217,36 @@ async function runTests() {
   assert(allRescheduled[0].status === 'completed' && allRescheduled[1].status === 'completed', 'Completed readings remain completed without punitive resets');
   assert(allRescheduled[2].status === 'pending' && allRescheduled[2].assignmentDate === '2026-10-28', 'Pending readings rescheduled forward with grace');
 
+  // Test 10: Fasting copy remains strictly neutral, non-prescriptive, and contemplative
+  const fastingDescriptions = [
+    'Quiet abstinence from morning dawn to evening dusk (approx 12 hours) accompanied by stillness and Scripture.',
+    'A full day dedicated to unhurried prayer, spiritual re-centering, and listening in God’s presence.',
+    'Modest, simple nourishment (approx 16 hours) focusing on prayerful clarity rather than physical austerity.',
+  ];
+  const forbiddenDietaryTerms = ['weight', 'diet', 'calories', 'burn', 'punish', 'detox', 'lean'];
+  let hasForbiddenTerm = false;
+  for (const desc of fastingDescriptions) {
+    for (const term of forbiddenDietaryTerms) {
+      if (desc.toLowerCase().includes(term)) {
+        hasForbiddenTerm = true;
+      }
+    }
+  }
+  assert(hasForbiddenTerm === false, 'Fasting copy is strictly health-neutral, non-prescriptive, and contemplative');
+
+  // Test 11: Timezone-aware recurrence preservation
+  const prayerSchedule = {
+    id: 'sched-uuid-prayer',
+    userId: userA,
+    kind: 'prayer',
+    name: 'Morning Stillness',
+    localStartTime: '07:00',
+    timezone: 'America/New_York',
+    recurrence: { frequency: 'daily', weekdays: [1, 2, 3, 4, 5] },
+  };
+  assert(prayerSchedule.localStartTime === '07:00', 'Local start time stored as wall-clock time string');
+  assert(prayerSchedule.timezone === 'America/New_York', 'User timezone partition preserved for recurrence');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);

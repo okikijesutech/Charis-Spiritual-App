@@ -3,17 +3,16 @@ import {
   BookOpen, 
   Heart, 
   BookMarked, 
-  Timer, 
   Sparkles,
   Bookmark,
   CalendarCheck
 } from 'lucide-react'
 import { 
-  mockUserProfile, 
-  mockFastingSchedule
+  mockUserProfile 
 } from '../data/mockData'
 import { RecentActivitySection } from '../components/home/RecentActivitySection'
 import { FeaturedReadingSection } from '../components/home/FeaturedReadingSection'
+import { FastingTimerWidget } from '../components/home/FastingTimerWidget'
 import { useAuth } from '../context/AuthContext';
 import { NavDestination } from '../types'
 import { Badge } from '../components/ui/Badge'
@@ -142,44 +141,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         {/* Widget B: Fasting Rhythm Timer */}
-        <div className="rounded-2xl bg-charis-surface border border-charis-border p-6 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Timer className="w-4 h-4 text-[#78866B] dark:text-[#8E9E80]" />
-                <span className="text-xs font-semibold text-[#78866B] dark:text-[#8E9E80] uppercase tracking-wider">
-                  Fasting Rhythm
-                </span>
-              </div>
-              <Badge variant="sage" size="sm">Active</Badge>
-            </div>
-
-            <div className="mt-3">
-              <h4 className="text-sm font-semibold text-charis-text">{mockFastingSchedule.type}</h4>
-              <p className="text-xs text-charis-text-muted mt-0.5 leading-relaxed">
-                {mockFastingSchedule.note}
-              </p>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex justify-between text-xs font-medium mb-1.5">
-                <span className="text-charis-text">{mockFastingSchedule.elapsedHours} hrs elapsed</span>
-                <span className="text-charis-text-muted">Target: {mockFastingSchedule.targetHours} hrs</span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-charis-border overflow-hidden">
-                <div 
-                  className="h-full bg-[#78866B] dark:bg-[#8E9E80] rounded-full transition-all duration-500"
-                  style={{ width: `${(mockFastingSchedule.elapsedHours / mockFastingSchedule.targetHours) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-charis-border/60 flex items-center justify-between text-xs text-charis-text-muted">
-            <span>Started {mockFastingSchedule.startTime}</span>
-            <span className="text-[#78866B] dark:text-[#8E9E80] font-medium">1.5 hrs remaining</span>
-          </div>
-        </div>
+        <FastingTimerWidget userId={activeUserId} />
       </section>
 
       {/* 5. Gentle Activity Summary (Grace over Streaks) */}
