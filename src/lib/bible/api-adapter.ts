@@ -1,11 +1,12 @@
 /**
  * Remote Bible API Adapter
- * Fetches complete Scripture chapters (all 66 books) for KJV, NLT, and WEB.
+ * Fetches complete Scripture chapters (all 66 books) across supported translations:
+ * NLT, BSB, ESV, KJV, WEB, and NIV.
  * Automatically persists retrieved chapters into IndexedDB for offline reading.
  * Per docs/BIBLE-TRANSLATIONS-RIGHTS.md
  */
 
-import { getBookById } from './canon';
+import { getBookById, SUPPORTED_TRANSLATIONS } from './canon';
 import { getDB } from '../db/indexeddb';
 import type { BibleChapter, BibleVerse } from '../../types/bible';
 
@@ -35,7 +36,7 @@ interface BibleApiResponse {
 
 export class RemoteBibleApiAdapter {
   /**
-   * Fetch complete chapter online for any book (1-66) in NLT, KJV, or WEB.
+   * Fetch complete chapter online for any book (1-66) across supported translations.
    */
   async fetchRemoteChapter(
     translationId: string,
@@ -46,14 +47,34 @@ export class RemoteBibleApiAdapter {
     if (!book) return null;
 
     const tid = translationId.toLowerCase();
+    const meta = SUPPORTED_TRANSLATIONS.find((t) => t.id === tid);
+    const attribution = meta?.attribution || `${translationId.toUpperCase()} Scripture`;
 
     try {
       if (tid === 'nlt') {
-        return await this.fetchNltChapter(book.order, book.id, book.name, chapterNumber);
+        return (
+          (await this.fetchBollsChapter('NLT', book.order, book.id, book.name, chapterNumber, attribution)) ||
+          (await this.fetchBibleGoChapter('NLT', book.order, book.id, book.name, chapterNumber, attribution))
+        );
+      } else if (tid === 'bsb') {
+        return await this.fetchBollsChapter('BSB', book.order, book.id, book.name, chapterNumber, attribution);
+      } else if (tid === 'esv') {
+        return (
+          (await this.fetchBollsChapter('ESV', book.order, book.id, book.name, chapterNumber, attribution)) ||
+          (await this.fetchBibleGoChapter('ESV', book.order, book.id, book.name, chapterNumber, attribution))
+        );
       } else if (tid === 'kjv') {
-        return await this.fetchKjvChapter(book.order, book.id, book.name, chapterNumber);
+        return (
+          (await this.fetchKjvChapter(book.order, book.id, book.name, chapterNumber)) ||
+          (await this.fetchBollsChapter('KJV', book.order, book.id, book.name, chapterNumber, attribution))
+        );
       } else if (tid === 'web') {
-        return await this.fetchWebChapter(book.order, book.id, book.name, chapterNumber);
+        return (
+          (await this.fetchWebChapter(book.order, book.id, book.name, chapterNumber)) ||
+          (await this.fetchBollsChapter('WEB', book.order, book.id, book.name, chapterNumber, attribution))
+        );
+      } else if (tid === 'niv') {
+        return await this.fetchBibleGoChapter('NIV', book.order, book.id, book.name, chapterNumber, attribution);
       }
       return null;
     } catch (err) {
@@ -63,121 +84,90 @@ export class RemoteBibleApiAdapter {
   }
 
   /**
-   * Fetch NLT chapter via Bolls Life API (with CORS support) and fallback to Bible-Go API
+   * Fetch chapter from Bolls.life API (Provides Access-Control-Allow-Origin: * for browser PWAs).
    */
-  private async fetchNltChapter(
+  private async fetchBollsChapter(
+    translationKey: string,
     bookOrder: number,
     bookId: string,
     bookName: string,
-    chapterNumber: number
+    chapterNumber: number,
+    attribution: string
   ): Promise<BibleChapter | null> {
-    // 1. Primary: Bolls Life API (provides Access-Control-Allow-Origin: * for browser PWAs)
     try {
-      const bollsUrl = `https://bolls.life/get-chapter/NLT/${bookOrder}/${chapterNumber}/`;
-      const response = await fetch(bollsUrl);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const verses: BibleVerse[] = data.map((item: any, index: number) => ({
-            verseNumber: item.verse,
-            text: (item.text || '').replace(/<[^>]*>/g, '').trim(),
-            isParagraphStart: index === 0 || index % 4 === 0,
-          }));
-
-          const chapter: BibleChapter = {
-            id: `nlt:${bookId.toUpperCase()}:${chapterNumber}`,
-            translationId: 'nlt',
-            bookId,
-            bookName,
-            chapterNumber,
-            title: `${bookName} ${chapterNumber}`,
-            attribution: 'Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers.',
-            verses,
-          };
-
-          await this.cacheChapterLocally(chapter);
-          return chapter;
-        }
-      }
-    } catch {
-      // Fall through to secondary provider
-    }
-
-    // 2. Secondary fallback: Bible-Go API
-    try {
-      const url = `https://bible-go-api.rkeplin.com/v1/books/${bookOrder}/chapters/${chapterNumber}?translation=NLT`;
+      const url = `https://bolls.life/get-chapter/${translationKey.toUpperCase()}/${bookOrder}/${chapterNumber}/`;
       const response = await fetch(url);
-      if (response.ok) {
-        const data: BibleGoVerseItem[] = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const verses: BibleVerse[] = data.map((item, index) => ({
-            verseNumber: item.verseId,
-            text: item.verse.replace(/^["'\s]+|["'\s]+$/g, ''),
-            isParagraphStart: index === 0 || index % 4 === 0,
-          }));
+      if (!response.ok) return null;
 
-          const chapter: BibleChapter = {
-            id: `nlt:${bookId.toUpperCase()}:${chapterNumber}`,
-            translationId: 'nlt',
-            bookId,
-            bookName,
-            chapterNumber,
-            title: `${bookName} ${chapterNumber}`,
-            attribution: 'Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright © 1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers.',
-            verses,
-          };
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
 
-          await this.cacheChapterLocally(chapter);
-          return chapter;
-        }
-      }
+      const verses: BibleVerse[] = data.map((item: any, index: number) => ({
+        verseNumber: item.verse,
+        text: (item.text || '').replace(/<[^>]*>/g, '').trim(),
+        isParagraphStart: index === 0 || index % 4 === 0,
+      }));
+
+      const chapter: BibleChapter = {
+        id: `${translationKey.toLowerCase()}:${bookId.toUpperCase()}:${chapterNumber}`,
+        translationId: translationKey.toLowerCase(),
+        bookId,
+        bookName,
+        chapterNumber,
+        title: `${bookName} ${chapterNumber}`,
+        attribution,
+        verses,
+      };
+
+      await this.cacheChapterLocally(chapter);
+      return chapter;
     } catch {
-      // Ignore
+      return null;
     }
-
-    return null;
   }
 
   /**
    * Fetch KJV chapter via Bible-API.com
    */
   private async fetchKjvChapter(
-    bookOrder: number,
+    _bookOrder: number,
     bookId: string,
     bookName: string,
     chapterNumber: number
   ): Promise<BibleChapter | null> {
-    const formattedName = encodeURIComponent(bookName);
-    const url = `https://bible-api.com/${formattedName}+${chapterNumber}?translation=kjv`;
-    const response = await fetch(url);
-    
-    if (response.ok) {
-      const data: BibleApiResponse = await response.json();
-      if (data.verses && data.verses.length > 0) {
-        const verses: BibleVerse[] = data.verses.map((v, index) => ({
-          verseNumber: v.verse,
-          text: v.text.trim(),
-          isParagraphStart: index === 0 || index % 4 === 0,
-        }));
+    try {
+      const formattedName = encodeURIComponent(bookName);
+      const url = `https://bible-api.com/${formattedName}+${chapterNumber}?translation=kjv`;
+      const response = await fetch(url);
 
-        const chapter: BibleChapter = {
-          id: `kjv:${bookId.toUpperCase()}:${chapterNumber}`,
-          translationId: 'kjv',
-          bookId,
-          bookName,
-          chapterNumber,
-          title: `${bookName} ${chapterNumber}`,
-          attribution: 'King James Version (Public Domain)',
-          verses,
-        };
+      if (response.ok) {
+        const data: BibleApiResponse = await response.json();
+        if (data.verses && data.verses.length > 0) {
+          const verses: BibleVerse[] = data.verses.map((v, index) => ({
+            verseNumber: v.verse,
+            text: v.text.trim(),
+            isParagraphStart: index === 0 || index % 4 === 0,
+          }));
 
-        await this.cacheChapterLocally(chapter);
-        return chapter;
+          const chapter: BibleChapter = {
+            id: `kjv:${bookId.toUpperCase()}:${chapterNumber}`,
+            translationId: 'kjv',
+            bookId,
+            bookName,
+            chapterNumber,
+            title: `${bookName} ${chapterNumber}`,
+            attribution: 'King James Version (Public Domain)',
+            verses,
+          };
+
+          await this.cacheChapterLocally(chapter);
+          return chapter;
+        }
       }
+    } catch {
+      // Ignored
     }
-
-    // Fallback to Bible-Go API if bible-api.com fails
-    return await this.fetchBibleGoChapter('KJV', bookOrder, bookId, bookName, chapterNumber);
+    return null;
   }
 
   /**
@@ -189,71 +179,84 @@ export class RemoteBibleApiAdapter {
     bookName: string,
     chapterNumber: number
   ): Promise<BibleChapter | null> {
-    const formattedName = encodeURIComponent(bookName);
-    const url = `https://bible-api.com/${formattedName}+${chapterNumber}?translation=web`;
-    const response = await fetch(url);
-    
-    if (response.ok) {
-      const data: BibleApiResponse = await response.json();
-      if (data.verses && data.verses.length > 0) {
-        const verses: BibleVerse[] = data.verses.map((v, index) => ({
-          verseNumber: v.verse,
-          text: v.text.trim(),
-          isParagraphStart: index === 0 || index % 4 === 0,
-        }));
+    try {
+      const formattedName = encodeURIComponent(bookName);
+      const url = `https://bible-api.com/${formattedName}+${chapterNumber}?translation=web`;
+      const response = await fetch(url);
 
-        const chapter: BibleChapter = {
-          id: `web:${bookId.toUpperCase()}:${chapterNumber}`,
-          translationId: 'web',
-          bookId,
-          bookName,
-          chapterNumber,
-          title: `${bookName} ${chapterNumber}`,
-          attribution: 'World English Bible (Public Domain)',
-          verses,
-        };
+      if (response.ok) {
+        const data: BibleApiResponse = await response.json();
+        if (data.verses && data.verses.length > 0) {
+          const verses: BibleVerse[] = data.verses.map((v, index) => ({
+            verseNumber: v.verse,
+            text: v.text.trim(),
+            isParagraphStart: index === 0 || index % 4 === 0,
+          }));
 
-        await this.cacheChapterLocally(chapter);
-        return chapter;
+          const chapter: BibleChapter = {
+            id: `web:${bookId.toUpperCase()}:${chapterNumber}`,
+            translationId: 'web',
+            bookId,
+            bookName,
+            chapterNumber,
+            title: `${bookName} ${chapterNumber}`,
+            attribution: 'World English Bible (Public Domain)',
+            verses,
+          };
+
+          await this.cacheChapterLocally(chapter);
+          return chapter;
+        }
       }
+    } catch {
+      // Ignored
     }
-
     return null;
   }
 
+  /**
+   * Fetch chapter from Bible-Go API (with dev proxy support for CORS)
+   */
   private async fetchBibleGoChapter(
     translationKey: string,
     bookOrder: number,
     bookId: string,
     bookName: string,
-    chapterNumber: number
+    chapterNumber: number,
+    attribution: string
   ): Promise<BibleChapter | null> {
-    const url = `https://bible-go-api.rkeplin.com/v1/books/${bookOrder}/chapters/${chapterNumber}?translation=${translationKey}`;
-    const response = await fetch(url);
-    if (!response.ok) return null;
+    try {
+      const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      const baseUrl = isDev ? '/api/bible-go' : 'https://bible-go-api.rkeplin.com';
+      const url = `${baseUrl}/v1/books/${bookOrder}/chapters/${chapterNumber}?translation=${translationKey.toUpperCase()}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
 
-    const data: BibleGoVerseItem[] = await response.json();
-    if (!Array.isArray(data) || data.length === 0) return null;
+      const data: BibleGoVerseItem[] = await response.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
 
-    const verses: BibleVerse[] = data.map((item, index) => ({
-      verseNumber: item.verseId,
-      text: item.verse.replace(/^["'\s]+|["'\s]+$/g, ''),
-      isParagraphStart: index === 0 || index % 4 === 0,
-    }));
+      const verses: BibleVerse[] = data.map((item, index) => ({
+        verseNumber: item.verseId,
+        text: item.verse.replace(/^["'\s]+|["'\s]+$/g, ''),
+        isParagraphStart: index === 0 || index % 4 === 0,
+      }));
 
-    const chapter: BibleChapter = {
-      id: `${translationKey.toLowerCase()}:${bookId.toUpperCase()}:${chapterNumber}`,
-      translationId: translationKey.toLowerCase(),
-      bookId,
-      bookName,
-      chapterNumber,
-      title: `${bookName} ${chapterNumber}`,
-      attribution: `${translationKey} Bible`,
-      verses,
-    };
+      const chapter: BibleChapter = {
+        id: `${translationKey.toLowerCase()}:${bookId.toUpperCase()}:${chapterNumber}`,
+        translationId: translationKey.toLowerCase(),
+        bookId,
+        bookName,
+        chapterNumber,
+        title: `${bookName} ${chapterNumber}`,
+        attribution,
+        verses,
+      };
 
-    await this.cacheChapterLocally(chapter);
-    return chapter;
+      await this.cacheChapterLocally(chapter);
+      return chapter;
+    } catch {
+      return null;
+    }
   }
 
   private async cacheChapterLocally(chapter: BibleChapter): Promise<void> {
@@ -261,7 +264,7 @@ export class RemoteBibleApiAdapter {
       const db = await getDB();
       await db.put('bible_chapters', chapter);
     } catch {
-      // IndexedDB write failed or in non-browser context
+      // Non-browser or quota error ignored
     }
   }
 }
