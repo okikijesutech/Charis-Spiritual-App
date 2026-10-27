@@ -168,6 +168,81 @@ export interface Database {
         }
         Relationships: []
       }
+      activity_types: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          category: string
+          is_archived: boolean
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id: string
+          user_id: string
+          name: string
+          category: string
+          is_archived?: boolean
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          category?: string
+          is_archived?: boolean
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: []
+      }
+      activity_logs: {
+        Row: {
+          id: string
+          user_id: string
+          activity_type_id: string | null
+          category: string
+          label: string
+          started_at: string
+          duration_seconds: number | null
+          note: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id: string
+          user_id: string
+          activity_type_id?: string | null
+          category: string
+          label: string
+          started_at?: string
+          duration_seconds?: number | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          activity_type_id?: string | null
+          category?: string
+          label?: string
+          started_at?: string
+          duration_seconds?: number | null
+          note?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: []
+      }
       sync_receipts: {
         Row: {
           operation_id: string

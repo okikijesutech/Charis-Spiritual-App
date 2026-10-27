@@ -8,9 +8,12 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { PrayerEntry, StudyEntry } from '../../types/journal';
 import type { SyncOperation } from '../../types/sync';
 import type { BibleChapter } from '../../types/bible';
+import type { ActivityLog, ActivityType } from '../../types/activity';
+import type { ReadingPlan, ReadingPlanAssignment } from '../../types/plan';
+import type { Schedule, SchedulePreset } from '../../types/schedule';
 
 export const DB_NAME = 'charis_local_db';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export interface InstalledTranslation {
   translationId: string;
@@ -73,6 +76,55 @@ export interface CharisDBSchema extends DBSchema {
     key: string; // translationId
     value: InstalledTranslation;
   };
+  activity_logs: {
+    key: string;
+    value: ActivityLog;
+    indexes: {
+      'by-user': string;
+      'by-user-started': [string, string];
+      'by-user-sync': [string, string];
+    };
+  };
+  activity_types: {
+    key: string;
+    value: ActivityType;
+    indexes: {
+      'by-user': string;
+    };
+  };
+  reading_plans: {
+    key: string;
+    value: ReadingPlan;
+    indexes: {
+      'by-user': string;
+      'by-user-sync': [string, string];
+    };
+  };
+  reading_plan_assignments: {
+    key: string;
+    value: ReadingPlanAssignment;
+    indexes: {
+      'by-plan': string;
+      'by-user-date': [string, string];
+      'by-user-sync': [string, string];
+    };
+  };
+  schedules: {
+    key: string;
+    value: Schedule;
+    indexes: {
+      'by-user': string;
+      'by-user-kind': [string, string];
+      'by-user-sync': [string, string];
+    };
+  };
+  schedule_presets: {
+    key: string;
+    value: SchedulePreset;
+    indexes: {
+      'by-user': string;
+    };
+  };
 }
 
 let dbInstance: IDBPDatabase<CharisDBSchema> | null = null;
@@ -129,6 +181,41 @@ export async function getDB(): Promise<IDBPDatabase<CharisDBSchema>> {
         }
         if (!db.objectStoreNames.contains('installed_translations')) {
           db.createObjectStore('installed_translations', { keyPath: 'translationId' });
+        }
+      }
+
+      // Version 3: Activity logs, reading plans, and schedules
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains('activity_logs')) {
+          const actLogStore = db.createObjectStore('activity_logs', { keyPath: 'id' });
+          actLogStore.createIndex('by-user', 'userId', { unique: false });
+          actLogStore.createIndex('by-user-started', ['userId', 'startedAt'], { unique: false });
+          actLogStore.createIndex('by-user-sync', ['userId', 'sync.syncStatus'], { unique: false });
+        }
+        if (!db.objectStoreNames.contains('activity_types')) {
+          const actTypeStore = db.createObjectStore('activity_types', { keyPath: 'id' });
+          actTypeStore.createIndex('by-user', 'userId', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('reading_plans')) {
+          const planStore = db.createObjectStore('reading_plans', { keyPath: 'id' });
+          planStore.createIndex('by-user', 'userId', { unique: false });
+          planStore.createIndex('by-user-sync', ['userId', 'sync.syncStatus'], { unique: false });
+        }
+        if (!db.objectStoreNames.contains('reading_plan_assignments')) {
+          const assignStore = db.createObjectStore('reading_plan_assignments', { keyPath: 'id' });
+          assignStore.createIndex('by-plan', 'planId', { unique: false });
+          assignStore.createIndex('by-user-date', ['userId', 'assignmentDate'], { unique: false });
+          assignStore.createIndex('by-user-sync', ['userId', 'sync.syncStatus'], { unique: false });
+        }
+        if (!db.objectStoreNames.contains('schedules')) {
+          const schedStore = db.createObjectStore('schedules', { keyPath: 'id' });
+          schedStore.createIndex('by-user', 'userId', { unique: false });
+          schedStore.createIndex('by-user-kind', ['userId', 'kind'], { unique: false });
+          schedStore.createIndex('by-user-sync', ['userId', 'sync.syncStatus'], { unique: false });
+        }
+        if (!db.objectStoreNames.contains('schedule_presets')) {
+          const presetStore = db.createObjectStore('schedule_presets', { keyPath: 'id' });
+          presetStore.createIndex('by-user', 'userId', { unique: false });
         }
       }
     },

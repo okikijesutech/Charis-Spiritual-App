@@ -14,9 +14,9 @@ import {
 import { 
   mockUserProfile, 
   mockReadingPlans, 
-  mockFastingSchedule, 
-  mockActivityLogs 
+  mockFastingSchedule
 } from '../data/mockData'
+import { RecentActivitySection } from '../components/home/RecentActivitySection'
 import { useAuth } from '../context/AuthContext';
 import { NavDestination } from '../types'
 import { Badge } from '../components/ui/Badge'
@@ -252,47 +252,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* 5. Gentle Activity Summary (Grace over Streaks) */}
-      <section className="rounded-2xl bg-charis-surface border border-charis-border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-serif font-bold text-lg text-charis-text">
-              Recent Spiritual Rhythm
-            </h3>
-            <p className="text-xs text-charis-text-muted mt-0.5">
-              Reflective record of prayer, reading, and study sessions
-            </p>
-          </div>
-          <Badge variant="neutral" size="sm">
-            {mockActivityLogs.length} entries recorded
-          </Badge>
-        </div>
-
-        <div className="divide-y divide-charis-border/60">
-          {mockActivityLogs.slice(0, 3).map((activity) => (
-            <div key={activity.id} className="py-3 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-charis-border-subtle flex items-center justify-center text-charis-primary text-xs font-medium">
-                  {activity.type === 'reading' && <BookOpen className="w-4 h-4" />}
-                  {activity.type === 'prayer' && <Heart className="w-4 h-4" />}
-                  {activity.type === 'study' && <BookMarked className="w-4 h-4" />}
-                  {activity.type === 'worship' && <Sparkles className="w-4 h-4" />}
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-charis-text">{activity.label}</h4>
-                  <p className="text-xs text-charis-text-muted">{activity.note}</p>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-xs text-charis-text font-medium">
-                  {activity.durationMinutes} min
-                </span>
-                <div className="text-[11px] text-charis-text-muted">{activity.timestamp}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <RecentActivitySection
+        userId={user?.id || 'demo-user-id'}
+        onOpenQuickAction={onOpenQuickAction}
+      />
     </div>
   )
 }

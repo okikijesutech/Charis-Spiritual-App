@@ -10,9 +10,18 @@ import { StudyJournalView } from './views/StudyJournalView'
 import { PlansView } from './views/PlansView'
 import { SettingsModal } from './components/modals/SettingsModal'
 import { QuickActionModal } from './components/modals/QuickActionModal'
-import { NavDestination, ActivityLog } from './types'
+import { NavDestination } from './types'
+import type { ActivityLog } from './types/activity'
+import { useAuth } from './context/AuthContext'
+import { activityRepository } from './lib/db/activity-repository'
+import { syncQueueManager } from './lib/sync/sync-queue'
+import { syncEngine } from './lib/sync/sync-engine'
+import { generateUUID } from './lib/id'
 
 export const AppContent: React.FC = () => {
+  const { user } = useAuth()
+  const activeUserId = user?.id || 'demo-user-id'
+
   const [currentTab, setCurrentTab] = useState<NavDestination>('home')
   const [isOffline, setIsOffline] = useState<boolean>(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
@@ -26,8 +35,18 @@ export const AppContent: React.FC = () => {
     setCurrentTab('study')
   }
 
-  const handleAddActivity = (_activity: ActivityLog) => {
-    // Activity logged
+  const handleAddActivity = async (activity: ActivityLog) => {
+    await activityRepository.save(activity)
+    await syncQueueManager.enqueue({
+      operationId: generateUUID(),
+      userId: activeUserId,
+      entityType: 'activity_log',
+      entityId: activity.id,
+      action: 'create',
+      baseVersion: 0,
+      payload: activity,
+    })
+    syncEngine.processQueue(activeUserId).catch(() => {})
   }
 
   return (
@@ -78,6 +97,7 @@ export const AppContent: React.FC = () => {
         isOpen={isQuickActionOpen}
         onClose={() => setIsQuickActionOpen(false)}
         onAddActivity={handleAddActivity}
+        userId={activeUserId}
       />
     </AppShell>
   )

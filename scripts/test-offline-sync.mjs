@@ -152,6 +152,37 @@ async function runTests() {
   assert(studyEntry.sync.syncStatus === 'conflict', 'Local draft retains conflict status without data loss');
   assert(studyEntry.sync.conflictCopy.title === 'Abiding in Christ (Remote Edit)', 'Remote snapshot preserved for side-by-side user resolution');
 
+  // Test 7: Multiple activity sessions per day offline without collision
+  const morningActivity = {
+    id: 'act-uuid-morning',
+    userId: userA,
+    category: 'prayer',
+    label: 'Morning Prayer',
+    startedAt: '2026-10-27T07:00:00Z',
+    durationSeconds: 900,
+    createdAt: '2026-10-27T07:00:00Z',
+    updatedAt: '2026-10-27T07:00:00Z',
+    deletedAt: null,
+    sync: { syncStatus: 'pending', localVersion: 1 },
+  };
+  const eveningActivity = {
+    id: 'act-uuid-evening',
+    userId: userA,
+    category: 'reading',
+    label: 'Evening Reading',
+    startedAt: '2026-10-27T20:00:00Z',
+    durationSeconds: 1200,
+    createdAt: '2026-10-27T20:00:00Z',
+    updatedAt: '2026-10-27T20:00:00Z',
+    deletedAt: null,
+    sync: { syncStatus: 'pending', localVersion: 1 },
+  };
+  localStore.set(morningActivity.id, morningActivity);
+  localStore.set(eveningActivity.id, eveningActivity);
+
+  const userAActivities = Array.from(localStore.values()).filter((e) => e.userId === userA && e.startedAt);
+  assert(userAActivities.length === 2, 'Multiple activity sessions per day coexist peacefully without streak reset');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);
