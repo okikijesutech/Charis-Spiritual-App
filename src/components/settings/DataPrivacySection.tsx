@@ -1,7 +1,8 @@
 /**
  * Data Privacy & Cache Management Section
- * Handles shared device notices, clearing local IndexedDB cache, and data exports.
- * Per docs/PRD.md FR-10 and docs/SECURITY.md.
+ * Handles shared device notices, clearing local IndexedDB cache,
+ * comprehensive data export, and permanent account deletion.
+ * Per docs/PRD.md FR-10, FR-12 and docs/SECURITY.md Section 10.
  */
 
 import React, { useState } from 'react';
@@ -11,21 +12,32 @@ import { prayerRepository } from '../../lib/db/prayer-repository';
 import { studyRepository } from '../../lib/db/study-repository';
 import { activityRepository } from '../../lib/db/activity-repository';
 import { planRepository } from '../../lib/db/plan-repository';
+import { scheduleRepository } from '../../lib/db/schedule-repository';
+import { settingsRepository } from '../../lib/db/settings-repository';
 import { syncQueueManager } from '../../lib/sync/sync-queue';
+import { ExportModal } from '../modals/ExportModal';
+import { AccountDeletionModal } from '../modals/AccountDeletionModal';
 
 export const DataPrivacySection: React.FC = () => {
   const { user } = useAuth();
+  const activeUserId = user?.id || 'demo-user-id';
+
   const [isClearing, setIsClearing] = useState(false);
   const [clearSuccess, setClearSuccess] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const handleClearLocalCache = async () => {
     setIsClearing(true);
-    const activeUserId = user?.id || 'demo-user-id';
-    await prayerRepository.clearUserData(activeUserId);
-    await studyRepository.clearUserData(activeUserId);
-    await activityRepository.clearUserData(activeUserId);
-    await planRepository.clearUserData(activeUserId);
-    await syncQueueManager.clearQueue(activeUserId);
+    await Promise.all([
+      prayerRepository.clearUserData(activeUserId),
+      studyRepository.clearUserData(activeUserId),
+      activityRepository.clearUserData(activeUserId),
+      planRepository.clearUserData(activeUserId),
+      scheduleRepository.clearUserData(activeUserId),
+      settingsRepository.clearUserData(activeUserId),
+      syncQueueManager.clearQueue(activeUserId),
+    ]);
     setIsClearing(false);
     setClearSuccess(true);
     setTimeout(() => setClearSuccess(false), 3000);
@@ -63,18 +75,38 @@ export const DataPrivacySection: React.FC = () => {
         </button>
       </div>
 
-      {/* Account Deletion / Export */}
+      {/* Account Deletion / Export Actions */}
       <div className="pt-2 border-t border-charis-border flex items-center justify-between">
-        <button className="text-xs text-charis-text-muted hover:text-charis-text flex items-center gap-1.5 transition-colors">
-          <Download className="w-3.5 h-3.5" />
-          <span>Export Personal Journals (JSON)</span>
+        <button
+          onClick={() => setIsExportOpen(true)}
+          className="text-xs text-charis-text-muted hover:text-charis-text flex items-center gap-1.5 transition-colors"
+        >
+          <Download className="w-3.5 h-3.5 text-charis-primary" />
+          <span>Export Personal Archive (JSON / Markdown)</span>
         </button>
 
-        <button className="text-xs text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1.5">
+        <button
+          onClick={() => setIsDeleteOpen(true)}
+          className="text-xs text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1.5"
+        >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Delete Account & Data</span>
         </button>
       </div>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        userId={activeUserId}
+      />
+
+      {/* Account Deletion Modal */}
+      <AccountDeletionModal
+        isOpen={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        userId={activeUserId}
+      />
     </div>
   );
 };

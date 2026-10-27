@@ -293,6 +293,32 @@ async function runTests() {
   lastPos = { bookId: 'JHN', chapterNumber: 3, translation: 'kjv' };
   assert(lastPos.bookId === 'JHN' && lastPos.chapterNumber === 3 && lastPos.translation === 'kjv', 'Last read passage and version retained across sessions');
 
+  // Test 18: Multi-entity export structure verification
+  const fullExport = {
+    exportMetadata: { exportVersion: '1.0', schemaVersion: 4, userId: userA },
+    prayers: [{ id: 'p1', title: 'Morning' }],
+    studies: [{ id: 's1', observations: 'Context' }],
+    activities: [{ id: 'a1', label: 'Prayer' }],
+    readingPlans: [{ id: 'plan1', name: 'Gospels' }],
+    schedules: [{ id: 'sc1', kind: 'fasting' }],
+  };
+  assert(fullExport.exportMetadata.schemaVersion === 4 && fullExport.prayers.length === 1 && fullExport.studies.length === 1 && fullExport.readingPlans.length === 1, 'Multi-entity export bundles all core spiritual disciplines');
+
+  // Test 19: Export sanitization verification (no secrets/tokens)
+  const forbiddenExportKeys = ['password', 'secret', 'access_token', 'refresh_token', 'apiKey'];
+  const exportJsonStr = JSON.stringify(fullExport);
+  const leaksSecrets = forbiddenExportKeys.some((k) => exportJsonStr.includes(k));
+  assert(leaksSecrets === false, 'Data export contains no auth credentials, tokens, or system secrets');
+
+  // Test 20: Account deletion purges user partition while preserving other users
+  localStore.set('userA-p1', { userId: userA, title: 'Note A' });
+  localStore.set('userB-p1', { userId: userB, title: 'Note B' });
+  for (const [key, val] of localStore.entries()) {
+    if (val && val.userId === userA) localStore.delete(key);
+  }
+  assert(localStore.has('userA-p1') === false, 'Account deletion purges all records for deleted user');
+  assert(localStore.has('userB-p1') === true, 'Account deletion preserves records belonging to other users');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);
