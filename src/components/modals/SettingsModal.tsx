@@ -20,6 +20,7 @@ import { ThemePreference } from '../../types'
 import { prayerRepository } from '../../lib/db/prayer-repository'
 import { studyRepository } from '../../lib/db/study-repository'
 import { activityRepository } from '../../lib/db/activity-repository'
+import { planRepository } from '../../lib/db/plan-repository'
 import { syncQueueManager } from '../../lib/sync/sync-queue'
 import { OfflineTranslationsSection } from '../settings/OfflineTranslationsSection'
 
@@ -60,6 +61,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       await prayerRepository.clearUserData(activeUserId)
       await studyRepository.clearUserData(activeUserId)
       await activityRepository.clearUserData(activeUserId)
+      await planRepository.clearUserData(activeUserId)
       await syncQueueManager.clearQueue(activeUserId)
     }
     await signOut()
@@ -73,6 +75,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     await prayerRepository.clearUserData(activeUserId)
     await studyRepository.clearUserData(activeUserId)
     await activityRepository.clearUserData(activeUserId)
+    await planRepository.clearUserData(activeUserId)
     await syncQueueManager.clearQueue(activeUserId)
     setIsClearing(false)
     setClearSuccess(true)

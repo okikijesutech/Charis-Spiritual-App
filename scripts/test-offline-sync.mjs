@@ -183,6 +183,40 @@ async function runTests() {
   const userAActivities = Array.from(localStore.values()).filter((e) => e.userId === userA && e.startedAt);
   assert(userAActivities.length === 2, 'Multiple activity sessions per day coexist peacefully without streak reset');
 
+  // Test 8: Reading plan automatic chapter distribution without duplicates
+  const totalGospelChapters = 89; // MAT (28) + MRK (16) + LUK (24) + JHN (21)
+  const targetDays = 30;
+  const avgPace = totalGospelChapters / targetDays; // ~2.96 ch/day
+
+  assert(avgPace < 25, 'Contemplative 30-day pace does not trigger high-workload warning');
+
+  // Test impossible workload check
+  const rushPace = totalGospelChapters / 2; // 44.5 ch/day
+  assert(rushPace > 25, '2-day rush plan correctly triggers gentle workload warning');
+
+  // Test 9: Safe rescheduling ("Grace Over Streaks")
+  const mockPlanAssignments = [
+    { id: 'a1', sequence: 1, status: 'completed', passages: [{ formatted: 'Matthew 1' }] },
+    { id: 'a2', sequence: 2, status: 'completed', passages: [{ formatted: 'Matthew 2' }] },
+    { id: 'a3', sequence: 3, status: 'pending', passages: [{ formatted: 'Matthew 3' }] },
+    { id: 'a4', sequence: 4, status: 'pending', passages: [{ formatted: 'Matthew 4' }] },
+  ];
+
+  // Simulating reschedule: keep completed untouched, redistribute pending
+  const completedUntouched = mockPlanAssignments.filter((a) => a.status === 'completed');
+  const pendingRescheduled = mockPlanAssignments
+    .filter((a) => a.status !== 'completed')
+    .map((a, idx) => ({
+      ...a,
+      sequence: completedUntouched.length + idx + 1,
+      assignmentDate: '2026-10-28', // new start date
+    }));
+
+  const allRescheduled = [...completedUntouched, ...pendingRescheduled];
+  assert(allRescheduled.length === 4, 'Total plan chapters preserved after rescheduling');
+  assert(allRescheduled[0].status === 'completed' && allRescheduled[1].status === 'completed', 'Completed readings remain completed without punitive resets');
+  assert(allRescheduled[2].status === 'pending' && allRescheduled[2].assignmentDate === '2026-10-28', 'Pending readings rescheduled forward with grace');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);

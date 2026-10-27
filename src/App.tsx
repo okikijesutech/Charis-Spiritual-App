@@ -83,7 +83,7 @@ export const AppContent: React.FC = () => {
       )}
 
       {currentTab === 'plans' && (
-        <PlansView />
+        <PlansView onOpenPassage={() => setCurrentTab('bible')} />
       )}
 
       {/* Settings Modal */}

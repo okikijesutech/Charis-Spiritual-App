@@ -1,11 +1,8 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { 
   BookOpen, 
   Heart, 
   BookMarked, 
-  CheckCircle2, 
-  Circle, 
-  ArrowRight, 
   Timer, 
   Sparkles,
   Bookmark,
@@ -13,14 +10,13 @@ import {
 } from 'lucide-react'
 import { 
   mockUserProfile, 
-  mockReadingPlans, 
   mockFastingSchedule
 } from '../data/mockData'
 import { RecentActivitySection } from '../components/home/RecentActivitySection'
+import { FeaturedReadingSection } from '../components/home/FeaturedReadingSection'
 import { useAuth } from '../context/AuthContext';
 import { NavDestination } from '../types'
 import { Badge } from '../components/ui/Badge'
-import { Button } from '../components/ui/Button'
 
 interface HomeViewProps {
   onNavigate: (tab: NavDestination) => void
@@ -32,15 +28,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenQuickAction
 }) => {
   const { profile, user } = useAuth();
-  const featuredPlan = mockReadingPlans[0]
-  const [todayAssignment, setTodayAssignment] = useState(featuredPlan.assignments[1])
-
-  const toggleAssignmentCompletion = () => {
-    setTodayAssignment(prev => ({
-      ...prev,
-      isCompleted: !prev.isCompleted
-    }))
-  }
+  const activeUserId = user?.id || 'demo-user-id';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -68,67 +56,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </section>
 
       {/* 2. Priority Featured Reading Card */}
-      <section aria-labelledby="featured-reading-title">
-        <div className="relative overflow-hidden rounded-2xl bg-charis-surface border border-charis-border p-6 shadow-card hover:border-charis-primary/40 transition-all">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-[#D95740]/10 dark:bg-[#E06D58]/15 text-charis-primary">
-                <BookOpen className="w-5 h-5" />
-              </span>
-              <div>
-                <span className="text-[11px] font-semibold text-charis-primary uppercase tracking-wider">
-                  Featured Plan · {featuredPlan.title}
-                </span>
-                <h3 id="featured-reading-title" className="text-lg font-serif font-bold text-charis-text">
-                  {todayAssignment.passage}
-                </h3>
-              </div>
-            </div>
-
-            <Badge variant={todayAssignment.isCompleted ? 'sage' : 'neutral'}>
-              {todayAssignment.dateLabel}
-            </Badge>
-          </div>
-
-          <p className="text-sm text-charis-text-muted font-sans mb-5 leading-relaxed">
-            Jesus walks on the water and calms the storm, paired with the shepherd’s stillness in Psalm 23.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-charis-border/60">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleAssignmentCompletion}
-                className="inline-flex items-center gap-2 text-xs font-medium text-charis-text hover:text-charis-primary transition-colors py-1.5 px-3 rounded-lg border border-charis-border bg-charis-border-subtle/50"
-              >
-                {todayAssignment.isCompleted ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Completed</span>
-                  </>
-                ) : (
-                  <>
-                    <Circle className="w-4 h-4 text-charis-text-muted" />
-                    <span>Mark Complete</span>
-                  </>
-                )}
-              </button>
-              <span className="text-xs text-charis-text-muted">
-                Day 14 of {featuredPlan.totalDays}
-              </span>
-            </div>
-
-            <Button
-              variant="terracotta-soft"
-              size="sm"
-              onClick={() => onNavigate('bible')}
-              className="gap-1.5"
-            >
-              <span>Open in Bible</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      </section>
+      <FeaturedReadingSection
+        userId={activeUserId}
+        onNavigate={onNavigate}
+      />
 
       {/* 3. Quick Actions Grid */}
       <section aria-label="Quick Actions">

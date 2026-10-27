@@ -9,6 +9,7 @@ import { syncQueueManager } from './sync-queue';
 import { prayerRepository } from '../db/prayer-repository';
 import { studyRepository } from '../db/study-repository';
 import { activityRepository } from '../db/activity-repository';
+import { planRepository } from '../db/plan-repository';
 import type { SyncOperation } from '../../types/sync';
 
 async function recordOpReceipt(op: SyncOperation): Promise<void> {
@@ -163,5 +164,84 @@ export async function syncActivityLog(op: SyncOperation): Promise<boolean> {
 
   await recordOpReceipt(op);
   await activityRepository.markSynced(op.entityId, op.userId, 1);
+  return true;
+}
+
+export async function syncReadingPlan(op: SyncOperation): Promise<boolean> {
+  if (!supabase) return false;
+
+  if (op.action === 'delete') {
+    const { error } = await supabase
+      .from('reading_plans')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', op.entityId)
+      .eq('user_id', op.userId);
+
+    if (error && error.code !== 'PGRST116') throw new Error(error.message);
+    await recordOpReceipt(op);
+    return true;
+  }
+
+  const p = (op.payload as Record<string, unknown>) || {};
+  const row = {
+    id: op.entityId,
+    user_id: op.userId,
+    name: typeof p.name === 'string' ? p.name : 'Reading Plan',
+    description: typeof p.description === 'string' ? p.description : null,
+    scope_type: typeof p.scopeType === 'string' ? p.scopeType : 'canon',
+    status: typeof p.status === 'string' ? p.status : 'active',
+    start_date: typeof p.startDate === 'string' ? p.startDate : new Date().toISOString().slice(0, 10),
+    target_end_date: typeof p.targetEndDate === 'string' ? p.targetEndDate : null,
+    timezone: typeof p.timezone === 'string' ? p.timezone : 'UTC',
+    distribution_mode: typeof p.distributionMode === 'string' ? p.distributionMode : 'automatic',
+    reading_days: Array.isArray(p.readingDays) ? (p.readingDays as number[]) : [0, 1, 2, 3, 4, 5, 6],
+    featured: Boolean(p.featured),
+    total_days: typeof p.totalDays === 'number' ? p.totalDays : null,
+    completed_days: typeof p.completedDays === 'number' ? p.completedDays : 0,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: upsertErr } = await supabase.from('reading_plans').upsert(row);
+  if (upsertErr) throw new Error(upsertErr.message);
+
+  await recordOpReceipt(op);
+  await planRepository.markSynced(op.entityId, op.userId, 1);
+  return true;
+}
+
+export async function syncReadingPlanAssignment(op: SyncOperation): Promise<boolean> {
+  if (!supabase) return false;
+
+  if (op.action === 'delete') {
+    const { error } = await supabase
+      .from('reading_plan_assignments')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', op.entityId)
+      .eq('user_id', op.userId);
+
+    if (error && error.code !== 'PGRST116') throw new Error(error.message);
+    await recordOpReceipt(op);
+    return true;
+  }
+
+  const p = (op.payload as Record<string, unknown>) || {};
+  const row = {
+    id: op.entityId,
+    user_id: op.userId,
+    plan_id: typeof p.planId === 'string' ? p.planId : op.entityId,
+    assignment_date: typeof p.assignmentDate === 'string' ? p.assignmentDate : new Date().toISOString().slice(0, 10),
+    sequence: typeof p.sequence === 'number' ? p.sequence : 1,
+    day_number: typeof p.dayNumber === 'number' ? p.dayNumber : 1,
+    passages: Array.isArray(p.passages) ? (p.passages as any) : [],
+    status: typeof p.status === 'string' ? p.status : 'pending',
+    progress: (p.progress as any) || null,
+    completed_at: typeof p.completedAt === 'string' ? p.completedAt : null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: upsertErr } = await supabase.from('reading_plan_assignments').upsert(row);
+  if (upsertErr) throw new Error(upsertErr.message);
+
+  await recordOpReceipt(op);
   return true;
 }

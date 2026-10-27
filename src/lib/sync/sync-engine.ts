@@ -7,7 +7,13 @@
 
 import { isSupabaseConfigured } from '../supabase/client';
 import { syncQueueManager } from './sync-queue';
-import { syncPrayerEntry, syncStudyEntry, syncActivityLog } from './sync-handlers';
+import { 
+  syncPrayerEntry, 
+  syncStudyEntry, 
+  syncActivityLog, 
+  syncReadingPlan, 
+  syncReadingPlanAssignment 
+} from './sync-handlers';
 import type { SyncOperation } from '../../types/sync';
 
 export interface SyncEngineStatus {
@@ -133,6 +139,12 @@ export class SyncEngine {
       }
       if (op.entityType === 'activity_log') {
         return await syncActivityLog(op);
+      }
+      if (op.entityType === 'reading_plan') {
+        return await syncReadingPlan(op);
+      }
+      if (op.entityType === 'reading_plan_assignment') {
+        return await syncReadingPlanAssignment(op);
       }
 
       return true;
