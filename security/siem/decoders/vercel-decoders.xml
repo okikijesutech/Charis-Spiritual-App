@@ -1,0 +1,14 @@
+<!--
+  Charis Vercel Edge Custom Decoders for Wazuh SIEM
+  Extracts edge request attributes for threat detection rules
+-->
+
+<decoder name="vercel-edge">
+  <prematch>charis-edge: VERCEL_SECURITY_EVENT</prematch>
+</decoder>
+
+<decoder name="vercel-edge-fields">
+  <parent>vercel-edge</parent>
+  <regex>srcip="(\S+)" method="(\S+)" path="(\S+)" status="(\d+)" user_agent="([^"]*)" host="(\S+)"</regex>
+  <order>srcip, action, url, id, extra_data, hostname</order>
+</decoder>
