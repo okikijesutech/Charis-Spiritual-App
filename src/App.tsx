@@ -28,13 +28,19 @@ export const AppContent: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false)
   const [isQuickActionOpen, setIsQuickActionOpen] = useState<boolean>(false)
+  const [isReaderChromeVisible, setIsReaderChromeVisible] = useState<boolean>(true)
   
   // Link state between Bible and Study Journal
   const [studyInitialRef, setStudyInitialRef] = useState<string | undefined>(undefined)
 
+  const handleSelectTab = (tab: NavDestination) => {
+    setCurrentTab(tab)
+    setIsReaderChromeVisible(true)
+  }
+
   const handleAttachStudyNote = (verseRef: string) => {
     setStudyInitialRef(verseRef)
-    setCurrentTab('study')
+    handleSelectTab('study')
   }
 
   const handleAddActivity = async (activity: ActivityLog) => {
@@ -54,16 +60,18 @@ export const AppContent: React.FC = () => {
   return (
     <AppShell
       currentTab={currentTab}
-      onSelectTab={setCurrentTab}
+      onSelectTab={handleSelectTab}
       isOffline={isOffline}
       onToggleOffline={() => setIsOffline(prev => !prev)}
       onOpenSettings={() => setIsSettingsOpen(true)}
       onOpenAuth={() => setIsAuthOpen(true)}
       onQuickAction={() => setIsQuickActionOpen(true)}
+      isReaderChromeVisible={currentTab === 'bible' ? isReaderChromeVisible : true}
+      onSetReaderChromeVisible={setIsReaderChromeVisible}
     >
       {currentTab === 'home' && (
         <HomeView
-          onNavigate={setCurrentTab}
+          onNavigate={handleSelectTab}
           onOpenQuickAction={() => setIsQuickActionOpen(true)}
         />
       )}
@@ -71,6 +79,8 @@ export const AppContent: React.FC = () => {
       {currentTab === 'bible' && (
         <BibleView
           onAttachStudyNote={handleAttachStudyNote}
+          isChromeVisible={isReaderChromeVisible}
+          onToggleChrome={() => setIsReaderChromeVisible(prev => !prev)}
         />
       )}
 

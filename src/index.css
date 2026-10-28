@@ -122,3 +122,42 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Pre-hydration splash screen styling */
+@media (prefers-color-scheme: dark) {
+  #charis-splash { background: #13151D !important; color: #F3EFEA !important; }
+}
+@keyframes charis-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+.splash-emblem {
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #E06D58 0%, #C24B36 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFCF7;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 42px;
+  font-weight: bold;
+  box-shadow: 0 12px 28px -6px rgba(217, 87, 64, 0.35);
+  animation: charis-pulse 2.2s infinite ease-in-out;
+}
+.splash-title {
+  margin-top: 18px;
+  font-family: 'Newsreader', Georgia, serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.splash-sub {
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  font-weight: 600;
+}
