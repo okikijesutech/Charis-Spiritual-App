@@ -137,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabase) {
       return { error: null }
     }
-    const redirectUrl = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin
+    const redirectUrl = typeof window !== 'undefined' ? window.location.origin : (import.meta.env.VITE_PUBLIC_SITE_URL || 'https://charis-six.vercel.app')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

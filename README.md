@@ -1,6 +1,6 @@
 # Charis (Χάρις) · Spiritual Discipline PWA
 
-[![Version](https://img.shields.io/badge/version-1.6.0-D95740.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.6.1-D95740.svg)](package.json)
 [![License: Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-78866B.svg)](LICENSE)
 [![PWA Ready](https://img.shields.io/badge/PWA-offline--first-292D3E.svg)](vite.config.ts)
 [![Security Gates](https://img.shields.io/badge/Security-25%2F25%20passed-22c55e.svg)](scripts/security-check.mjs)
