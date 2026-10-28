@@ -69,35 +69,37 @@ export const AppContent: React.FC = () => {
       isReaderChromeVisible={currentTab === 'bible' ? isReaderChromeVisible : true}
       onSetReaderChromeVisible={setIsReaderChromeVisible}
     >
-      {currentTab === 'home' && (
-        <HomeView
-          onNavigate={handleSelectTab}
-          onOpenQuickAction={() => setIsQuickActionOpen(true)}
-        />
-      )}
+      <div key={currentTab} className="animate-view-transition">
+        {currentTab === 'home' && (
+          <HomeView
+            onNavigate={handleSelectTab}
+            onOpenQuickAction={() => setIsQuickActionOpen(true)}
+          />
+        )}
 
-      {currentTab === 'bible' && (
-        <BibleView
-          onAttachStudyNote={handleAttachStudyNote}
-          isChromeVisible={isReaderChromeVisible}
-          onToggleChrome={() => setIsReaderChromeVisible(prev => !prev)}
-        />
-      )}
+        {currentTab === 'bible' && (
+          <BibleView
+            onAttachStudyNote={handleAttachStudyNote}
+            isChromeVisible={isReaderChromeVisible}
+            onToggleChrome={() => setIsReaderChromeVisible(prev => !prev)}
+          />
+        )}
 
-      {currentTab === 'prayer' && (
-        <PrayerJournalView />
-      )}
+        {currentTab === 'prayer' && (
+          <PrayerJournalView />
+        )}
 
-      {currentTab === 'study' && (
-        <StudyJournalView
-          initialScriptureRef={studyInitialRef}
-          onClearInitialScriptureRef={() => setStudyInitialRef(undefined)}
-        />
-      )}
+        {currentTab === 'study' && (
+          <StudyJournalView
+            initialScriptureRef={studyInitialRef}
+            onClearInitialScriptureRef={() => setStudyInitialRef(undefined)}
+          />
+        )}
 
-      {currentTab === 'plans' && (
-        <PlansView onOpenPassage={() => setCurrentTab('bible')} />
-      )}
+        {currentTab === 'plans' && (
+          <PlansView onOpenPassage={() => setCurrentTab('bible')} />
+        )}
+      </div>
 
       {/* Settings Modal */}
       <SettingsModal

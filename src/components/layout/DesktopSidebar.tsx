@@ -32,14 +32,13 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   return (
     <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-charis-surface border-r border-charis-border h-screen sticky top-0 transition-colors select-none">
       {/* Brand area */}
-      <div className="p-5 border-b border-charis-border/60">
+      <div className="p-6 border-b border-charis-border/60">
         <button
           onClick={() => onSelectTab('home')}
-          className="flex items-center gap-3 hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary rounded-xl text-left"
+          className="flex items-center hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary rounded-xl text-left"
           title="Return to Home"
         >
-          <CharisLogo variant="icon" size="md" />
-          <CharisLogo variant="wordmark" size="md" />
+          <CharisLogo variant="wordmark" size="lg" />
         </button>
       </div>
 

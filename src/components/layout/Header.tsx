@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="Return to Home"
             aria-label="Return to Home"
           >
-            <CharisLogo variant="responsive" size="md" />
+            <CharisLogo variant="wordmark" size="md" />
           </button>
           {currentTab && currentTab !== 'home' && (
             <span className="md:hidden text-[10px] sm:text-[11px] font-sans font-medium text-charis-primary bg-charis-primary/10 px-2 py-0.5 rounded-full capitalize">
