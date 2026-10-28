@@ -1,11 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E06D58"/>
-      <stop offset="100%" stop-color="#C24B36"/>
-    </linearGradient>
-  </defs>
-  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#bgGrad)"/>
-  <rect x="8" y="8" width="112" height="112" rx="28" fill="none" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="2"/>
-  <text x="50%" y="54%" font-family="'Newsreader', 'Georgia', serif" font-size="70" font-weight="bold" fill="#FFFCF7" text-anchor="middle" dominant-baseline="central">Χ</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect x="2" y="2" width="28" height="28" rx="7" fill="#B9674D"/>
+  <g transform="translate(16, 17.5)">
+    <text x="-0.5" y="1.5" font-family="'Newsreader', 'Georgia', serif" font-size="18" font-weight="bold" fill="#FFFDF9" text-anchor="middle" dominant-baseline="central">c</text>
+    <path d="M 0 -2.2 C 1.4 -1.1 1.6 0.9 0 2.8 C -1.6 0.9 -1.4 -1.1 0 -2.2 Z" transform="translate(3.2, -6.8) rotate(42)" fill="#FFFDF9"/>
+  </g>
 </svg>

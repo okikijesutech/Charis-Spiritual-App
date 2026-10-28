@@ -3,6 +3,7 @@ import { Home, BookOpen, Heart, BookMarked, Calendar, PlusCircle, Sparkles, User
 import { NavDestination } from '../../types'
 import { useAuth } from '../../context/AuthContext'
 import { mockUserProfile } from '../../data/mockData'
+import { CharisLogo } from '../brand/CharisLogo'
 
 interface DesktopSidebarProps {
   currentTab: NavDestination
@@ -31,20 +32,15 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   return (
     <aside className="hidden md:flex flex-col w-64 lg:w-72 bg-charis-surface border-r border-charis-border h-screen sticky top-0 transition-colors select-none">
       {/* Brand area */}
-      <div className="p-6 border-b border-charis-border/60">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-charis-terracotta/10 dark:bg-charis-terracotta-dark/15 border border-charis-terracotta/20 flex items-center justify-center text-charis-primary font-serif font-bold text-xl shadow-subtle">
-            Χ
-          </div>
-          <div>
-            <h2 className="font-serif font-bold text-xl tracking-tight text-charis-text">
-              Charis
-            </h2>
-            <p className="text-xs text-charis-text-muted font-sans">
-              Spiritual Discipline PWA
-            </p>
-          </div>
-        </div>
+      <div className="p-5 border-b border-charis-border/60">
+        <button
+          onClick={() => onSelectTab('home')}
+          className="flex items-center gap-3 hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary rounded-xl text-left"
+          title="Return to Home"
+        >
+          <CharisLogo variant="icon" size="md" />
+          <CharisLogo variant="wordmark" size="md" />
+        </button>
       </div>
 
       {/* Quick Action Button */}

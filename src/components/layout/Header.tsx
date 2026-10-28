@@ -14,6 +14,7 @@ import { useSync } from '../../context/SyncContext'
 import { useAuth } from '../../context/AuthContext'
 import { mockUserProfile } from '../../data/mockData'
 import { ThemePreference, NavDestination } from '../../types'
+import { CharisLogo } from '../brand/CharisLogo'
 
 interface HeaderProps {
   currentTab?: NavDestination
@@ -59,27 +60,17 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-2.5 sm:gap-3">
           <button
             onClick={() => onSelectTab && onSelectTab('home')}
-            className="w-9 h-9 rounded-xl bg-charis-terracotta/10 dark:bg-charis-terracotta-dark/15 border border-charis-terracotta/20 flex items-center justify-center text-charis-primary font-serif font-bold text-lg shadow-subtle hover:scale-105 transition-transform shrink-0"
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary rounded-xl p-0.5"
             title="Return to Home"
             aria-label="Return to Home"
           >
-            Χ
+            <CharisLogo variant="responsive" size="md" />
           </button>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <h1 className="font-serif text-lg font-bold tracking-tight text-charis-text leading-tight">
-                Charis
-              </h1>
-              {currentTab && (
-                <span className="md:hidden text-[10px] sm:text-[11px] font-sans text-charis-primary bg-charis-primary/10 px-2 py-0.5 rounded-full capitalize">
-                  {currentTab}
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] font-sans text-charis-text-muted hidden sm:block">
-              Spiritual Discipline & Scripture
-            </p>
-          </div>
+          {currentTab && currentTab !== 'home' && (
+            <span className="md:hidden text-[10px] sm:text-[11px] font-sans font-medium text-charis-primary bg-charis-primary/10 px-2 py-0.5 rounded-full capitalize">
+              {currentTab}
+            </span>
+          )}
         </div>
 
         {/* Header Controls */}
