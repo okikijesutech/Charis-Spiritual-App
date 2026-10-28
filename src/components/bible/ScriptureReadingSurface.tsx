@@ -15,6 +15,7 @@ interface ScriptureReadingSurfaceProps {
   chapter: BibleChapter | null
   currentBook: CanonicalBook
   selectedChapterNumber: number
+  targetVerseNumber?: number | null
   currentTranslationMeta: BibleTranslationMeta
   fontSize: number
   interactiveVerses: InteractiveVerse[]
@@ -30,6 +31,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
   chapter,
   currentBook,
   selectedChapterNumber,
+  targetVerseNumber,
   currentTranslationMeta,
   fontSize,
   interactiveVerses,
@@ -81,8 +83,11 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
         style={{ fontSize: `${fontSize}px` }}
       >
         {interactiveVerses.map((v) => {
+          const isTarget = targetVerseNumber === v.verseNumber
           let highlightStyle = ''
-          if (v.isHighlighted) {
+          if (isTarget) {
+            highlightStyle = 'ring-2 ring-charis-primary bg-charis-primary/10 px-1 rounded-lg'
+          } else if (v.isHighlighted) {
             if (v.highlightColor === 'terracotta') highlightStyle = 'bg-charis-primary/15 px-1 rounded'
             else if (v.highlightColor === 'sage') highlightStyle = 'bg-charis-secondary/15 px-1 rounded'
             else highlightStyle = 'bg-amber-400/20 px-1 rounded'
@@ -91,6 +96,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
           return (
             <p
               key={v.verseNumber}
+              id={`verse-${v.verseNumber}`}
               onClick={(e) => {
                 if (!isChromeVisible) {
                   e.stopPropagation()
@@ -99,7 +105,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
                 }
                 onSelectVerse(v)
               }}
-              className={`group cursor-pointer rounded-lg p-1.5 -mx-1.5 transition-colors hover:bg-charis-border-subtle/70 ${highlightStyle}`}
+              className={`group cursor-pointer rounded-lg p-1.5 -mx-1.5 transition-all duration-300 hover:bg-charis-border-subtle/70 ${highlightStyle}`}
               tabIndex={0}
               role="button"
             >

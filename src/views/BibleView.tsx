@@ -6,6 +6,7 @@ import { VerseActionModal, type InteractiveVerse } from '../components/bible/Ver
 import { BibleToolbar } from '../components/bible/BibleToolbar';
 import { ScriptureSearchModal } from '../components/bible/ScriptureSearchModal';
 import { FloatingChapterBar } from '../components/bible/FloatingChapterBar';
+import { BookChapterPickerModal } from '../components/bible/BookChapterPickerModal';
 import { ScriptureReadingSurface } from '../components/bible/ScriptureReadingSurface';
 import { getLastBiblePosition, saveLastBiblePosition } from '../lib/bible/persistence';
 import type { BibleChapter } from '../types/bible';
@@ -32,9 +33,11 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const [activeVerse, setActiveVerse] = useState<InteractiveVerse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [copiedNotification, setCopiedNotification] = useState(false);
+  const [targetVerseNumber, setTargetVerseNumber] = useState<number | null>(null);
 
   // Search modal state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
 
@@ -49,6 +52,25 @@ export const BibleView: React.FC<BibleViewProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Smooth scroll and focus target verse
+  useEffect(() => {
+    if (!targetVerseNumber || !chapter) return;
+    const timeoutId = setTimeout(() => {
+      const el = document.getElementById(`verse-${targetVerseNumber}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    return () => clearTimeout(timeoutId);
+  }, [chapter, targetVerseNumber]);
+
+  useEffect(() => {
+    if (targetVerseNumber) {
+      const timer = setTimeout(() => setTargetVerseNumber(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [targetVerseNumber]);
 
   const currentBook = getBookById(selectedBookId) || CANONICAL_BOOKS[0];
   const currentTranslationMeta =
@@ -118,6 +140,9 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const handleSelectSearchResult = (res: BibleSearchResult) => {
     setSelectedBookId(res.reference.bookId);
     setSelectedChapterNumber(res.reference.chapter);
+    if (res.reference.startVerse) {
+      setTargetVerseNumber(res.reference.startVerse);
+    }
     saveLastBiblePosition({
       translation: selectedTranslation,
       bookId: res.reference.bookId,
@@ -187,6 +212,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
         chapter={chapter}
         currentBook={currentBook}
         selectedChapterNumber={selectedChapterNumber}
+        targetVerseNumber={targetVerseNumber}
         currentTranslationMeta={currentTranslationMeta}
         fontSize={fontSize}
         interactiveVerses={interactiveVerses}
@@ -207,9 +233,25 @@ export const BibleView: React.FC<BibleViewProps> = ({
         isVisible={Boolean(isChromeVisible)}
         onPrevChapter={handlePrevChapter}
         onNextChapter={handleNextChapter}
+        onOpenPicker={() => setIsPickerOpen(true)}
       />
 
-      {/* 4. Scripture Search Modal */}
+      {/* 4. Book, Chapter & Verse Quick Picker Modal */}
+      <BookChapterPickerModal
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        selectedBookId={selectedBookId}
+        selectedChapterNumber={selectedChapterNumber}
+        selectedVerseNumber={targetVerseNumber}
+        onSelectPassage={(bookId, chapterNum, verseNum) => {
+          setSelectedBookId(bookId);
+          setSelectedChapterNumber(chapterNum);
+          setTargetVerseNumber(verseNum ?? null);
+          saveLastBiblePosition({ translation: selectedTranslation, bookId, chapterNumber: chapterNum });
+        }}
+      />
+
+      {/* 5. Scripture Search Modal */}
       <ScriptureSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}

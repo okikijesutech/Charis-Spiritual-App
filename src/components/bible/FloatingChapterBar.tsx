@@ -1,11 +1,11 @@
 /**
  * Floating Quick Chapter Stepper Bar
  * Mobile-first floating pill positioned above bottom navigation in Bible reader.
- * Enables 1-handed chapter stepping and reflects immersive reading visibility.
+ * Enables 1-handed chapter stepping and clickable book/chapter picker modal trigger.
  */
 
 import React from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 
 interface FloatingChapterBarProps {
   bookName: string
@@ -15,6 +15,7 @@ interface FloatingChapterBarProps {
   isVisible: boolean
   onPrevChapter: () => void
   onNextChapter: () => void
+  onOpenPicker: () => void
 }
 
 export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
@@ -25,6 +26,7 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
   isVisible,
   onPrevChapter,
   onNextChapter,
+  onOpenPicker,
 }) => {
   return (
     <aside
@@ -33,7 +35,7 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
         isVisible ? 'translate-y-0 opacity-100 pointer-events-auto' : 'translate-y-16 opacity-0 pointer-events-none'
       }`}
     >
-      <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-charis-surface/95 backdrop-blur-md border border-charis-border/80 shadow-card text-xs font-medium">
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-charis-surface/95 backdrop-blur-md border border-charis-border/80 shadow-card text-xs font-medium">
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -48,14 +50,24 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
           <span className="hidden xs:inline text-[11px]">Prev</span>
         </button>
 
-        <div className="flex items-center gap-1.5 px-2">
+        {/* Clickable passage title trigger */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpenPicker()
+          }}
+          className="flex items-center gap-1 px-2 py-1 rounded-full hover:bg-charis-border-subtle transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer"
+          title="Change book and chapter"
+          aria-label={`Change passage: currently ${bookName} ${chapterNumber}`}
+        >
           <span className="font-serif font-bold text-charis-text text-xs whitespace-nowrap">
             {bookName} {chapterNumber}
           </span>
+          <ChevronDown className="w-3 h-3 text-charis-text-muted" />
           <span className="text-[10px] text-charis-primary uppercase font-mono bg-charis-primary/10 px-1.5 py-0.5 rounded">
             {translationShortName}
           </span>
-        </div>
+        </button>
 
         <button
           onClick={(e) => {
