@@ -2,17 +2,68 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#F8F2E8" id="theme-color-meta" />
     <meta name="description" content="Charis — A quiet, personal companion for Scripture, prayer, study, and reflection." />
+    <!-- Apple WebClip / PWA Standalone -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Charis" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
     <title>Charis — Spiritual Discipline</title>
   </head>
   <body class="bg-charis-bg text-charis-text antialiased selection:bg-charis-primary/20 selection:text-charis-primary">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant 0ms Pre-Hydration Mobile Splash Screen -->
+      <div id="charis-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F8F2E8;color:#292D3E;font-family:'Inter',system-ui,sans-serif;z-index:9999;">
+        <style>
+          @media (prefers-color-scheme: dark) {
+            #charis-splash { background: #13151D !important; color: #F3EFEA !important; }
+          }
+          @keyframes charis-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+          }
+          .splash-emblem {
+            width: 76px;
+            height: 76px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #E06D58 0%, #C24B36 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFCF7;
+            font-family: 'Newsreader', Georgia, serif;
+            font-size: 42px;
+            font-weight: bold;
+            box-shadow: 0 12px 28px -6px rgba(217, 87, 64, 0.35);
+            animation: charis-pulse 2.2s infinite ease-in-out;
+          }
+          .splash-title {
+            margin-top: 18px;
+            font-family: 'Newsreader', Georgia, serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+          }
+          .splash-sub {
+            margin-top: 6px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.65;
+            font-weight: 600;
+          }
+        </style>
+        <div class="splash-emblem">Χ</div>
+        <div class="splash-title">Charis</div>
+        <div class="splash-sub">Grace Over Streaks</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

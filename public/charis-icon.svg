@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E06D58"/>
+      <stop offset="100%" stop-color="#C24B36"/>
+    </linearGradient>
+    <filter id="subtleShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <!-- Background Rounded Squircle -->
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bgGrad)" filter="url(#subtleShadow)"/>
+  <rect x="32" y="32" width="448" height="448" rx="112" fill="none" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="4"/>
+  <!-- Greek Chi (Χ) Emblem -->
+  <text x="50%" y="54%" font-family="'Newsreader', 'Georgia', serif" font-size="280" font-weight="bold" fill="#FFFCF7" text-anchor="middle" dominant-baseline="central">Χ</text>
+</svg>

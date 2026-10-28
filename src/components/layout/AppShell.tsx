@@ -10,6 +10,7 @@ interface AppShellProps {
   isOffline: boolean
   onToggleOffline: () => void
   onOpenSettings: () => void
+  onOpenAuth: () => void
   onQuickAction: () => void
   children: React.ReactNode
 }
@@ -20,6 +21,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   isOffline,
   onToggleOffline,
   onOpenSettings,
+  onOpenAuth,
   onQuickAction,
   children
 }) => {
@@ -30,6 +32,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         currentTab={currentTab}
         onSelectTab={onSelectTab}
         onQuickAction={onQuickAction}
+        onOpenAuth={onOpenAuth}
       />
 
       {/* Main App Flex Column */}
@@ -41,6 +44,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           isOffline={isOffline}
           onToggleOffline={onToggleOffline}
           onOpenSettings={onOpenSettings}
+          onOpenAuth={onOpenAuth}
         />
 
         {/* Scrollable Content Area - ONLY this element scrolls! */}

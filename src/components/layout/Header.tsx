@@ -13,10 +13,13 @@ import {
   Heart,
   BookMarked,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  User
 } from 'lucide-react'
 import { useTheme } from '../../context/ThemeContext'
 import { useSync } from '../../context/SyncContext'
+import { useAuth } from '../../context/AuthContext'
+import { mockUserProfile } from '../../data/mockData'
 import { ThemePreference, NavDestination } from '../../types'
 
 interface HeaderProps {
@@ -25,6 +28,7 @@ interface HeaderProps {
   isOffline: boolean
   onToggleOffline: () => void
   onOpenSettings: () => void
+  onOpenAuth: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -32,11 +36,15 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   isOffline,
   onToggleOffline,
-  onOpenSettings
+  onOpenSettings,
+  onOpenAuth
 }) => {
   const { theme, setTheme } = useTheme()
+  const { user, profile } = useAuth()
   const { isOnline: networkOnline, isSyncing, statusText, triggerSync, pendingCount } = useSync()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const displayName = profile?.display_name || user?.user_metadata?.full_name || (user ? user.email?.split('@')[0] : mockUserProfile.name)
 
   const effectiveOffline = isOffline || !networkOnline
 
@@ -176,10 +184,25 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenSettings}
               className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text min-w-[36px] min-h-[36px] flex items-center justify-center"
-              title="Settings & Account"
+              title="Settings & Preferences"
               aria-label="Settings and Preferences"
             >
               <Settings className="w-4 h-4 text-charis-text-muted hover:text-charis-text" />
+            </button>
+
+            {/* Direct Account / Sign-In Quick Trigger */}
+            <button
+              onClick={onOpenAuth}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-charis-primary/30 bg-charis-primary/5 hover:bg-charis-primary/10 transition-colors text-charis-text min-w-[36px] min-h-[36px] flex items-center gap-1.5 shadow-subtle"
+              title={user ? `Signed in: ${displayName}` : "Sign In or Create Account"}
+              aria-label={user ? "Manage Account" : "Sign In or Create Account"}
+            >
+              <div className="w-5 h-5 rounded-lg bg-charis-primary/15 text-charis-primary flex items-center justify-center font-serif font-bold text-xs shrink-0">
+                {displayName ? displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+              </div>
+              <span className="hidden sm:inline text-xs font-medium text-charis-primary truncate max-w-[85px]">
+                {user ? displayName.split(' ')[0] : 'Sign In'}
+              </span>
             </button>
           </div>
         </div>

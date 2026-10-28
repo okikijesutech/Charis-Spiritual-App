@@ -1,18 +1,25 @@
 import React from 'react'
-import { Home, BookOpen, Heart, BookMarked, Calendar, PlusCircle, Sparkles } from 'lucide-react'
+import { Home, BookOpen, Heart, BookMarked, Calendar, PlusCircle, Sparkles, User, UserCheck } from 'lucide-react'
 import { NavDestination } from '../../types'
+import { useAuth } from '../../context/AuthContext'
+import { mockUserProfile } from '../../data/mockData'
 
 interface DesktopSidebarProps {
   currentTab: NavDestination
   onSelectTab: (tab: NavDestination) => void
   onQuickAction: () => void
+  onOpenAuth: () => void
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   currentTab,
   onSelectTab,
-  onQuickAction
+  onQuickAction,
+  onOpenAuth
 }) => {
+  const { user, profile } = useAuth()
+  const displayName = profile?.display_name || user?.user_metadata?.full_name || (user ? user.email?.split('@')[0] : mockUserProfile.name)
+
   const navItems: { id: NavDestination; label: string; icon: React.FC<{ className?: string }>; description: string }[] = [
     { id: 'home', label: 'Home', icon: Home, description: 'Daily rhythm & overview' },
     { id: 'bible', label: 'Bible Reader', icon: BookOpen, description: 'Scripture & annotations' },
@@ -86,8 +93,36 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         })}
       </nav>
 
+      {/* Direct Account Access Card */}
+      <div className="px-3 pb-2">
+        <button
+          onClick={onOpenAuth}
+          className="w-full flex items-center gap-2.5 p-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-all text-left group"
+          title={user ? `Signed in as ${user.email}` : "Sign In or Create Account"}
+        >
+          <div className="w-8 h-8 rounded-lg bg-charis-primary/10 text-charis-primary flex items-center justify-center font-serif font-bold text-sm shrink-0">
+            {displayName ? displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-charis-text truncate">
+              {displayName}
+            </div>
+            <div className="text-[10px] text-charis-text-muted truncate flex items-center gap-1">
+              {user ? (
+                <>
+                  <UserCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>Account Synced</span>
+                </>
+              ) : (
+                <span className="text-charis-primary font-medium">Sign In to Sync</span>
+              )}
+            </div>
+          </div>
+        </button>
+      </div>
+
       {/* Footer / Grace note */}
-      <div className="p-4 m-3 rounded-2xl bg-charis-border-subtle/70 border border-charis-border/60">
+      <div className="p-4 m-3 mt-0 rounded-2xl bg-charis-border-subtle/70 border border-charis-border/60">
         <div className="flex items-center gap-2 text-xs font-semibold text-charis-primary">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Grace over streaks</span>

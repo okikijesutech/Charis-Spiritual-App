@@ -10,6 +10,7 @@ import { StudyJournalView } from './views/StudyJournalView'
 import { PlansView } from './views/PlansView'
 import { SettingsModal } from './components/modals/SettingsModal'
 import { QuickActionModal } from './components/modals/QuickActionModal'
+import { AuthModal } from './components/modals/AuthModal'
 import { NavDestination } from './types'
 import type { ActivityLog } from './types/activity'
 import { useAuth } from './context/AuthContext'
@@ -25,6 +26,7 @@ export const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavDestination>('home')
   const [isOffline, setIsOffline] = useState<boolean>(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
+  const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false)
   const [isQuickActionOpen, setIsQuickActionOpen] = useState<boolean>(false)
   
   // Link state between Bible and Study Journal
@@ -56,6 +58,7 @@ export const AppContent: React.FC = () => {
       isOffline={isOffline}
       onToggleOffline={() => setIsOffline(prev => !prev)}
       onOpenSettings={() => setIsSettingsOpen(true)}
+      onOpenAuth={() => setIsAuthOpen(true)}
       onQuickAction={() => setIsQuickActionOpen(true)}
     >
       {currentTab === 'home' && (
@@ -90,6 +93,12 @@ export const AppContent: React.FC = () => {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Direct Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
       />
 
       {/* Quick Action Activity Modal */}
