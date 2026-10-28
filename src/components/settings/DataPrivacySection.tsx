@@ -57,19 +57,19 @@ export const DataPrivacySection: React.FC = () => {
       </div>
 
       {/* Local Storage & Cache Partition Management */}
-      <div className="p-3 border border-charis-border rounded-xl flex items-center justify-between">
+      <div className="p-3 border border-charis-border rounded-xl flex items-center justify-between gap-3">
         <div>
           <span className="text-xs font-semibold text-charis-text block">Local Device Cache</span>
-          <span className="text-[11px] text-charis-text-muted">
+          <span className="text-[11px] text-charis-text-muted leading-relaxed block mt-0.5">
             {clearSuccess
-              ? 'Local storage cleared successfully.'
-              : 'Remove all offline records for this account from this browser.'}
+              ? 'Local cache cleared. Synced cloud records remain safe.'
+              : 'Clears offline drafts and cached Bible data from this browser. Does not affect synced records in the cloud.'}
           </span>
         </div>
         <button
           onClick={handleClearLocalCache}
           disabled={isClearing}
-          className="px-2.5 py-1 text-xs rounded-lg border border-charis-border hover:bg-charis-border-subtle text-charis-text transition-colors"
+          className="px-2.5 py-1.5 text-xs rounded-lg border border-charis-border hover:bg-charis-border-subtle text-charis-text transition-colors shrink-0"
         >
           {isClearing ? 'Clearing...' : 'Clear Cache'}
         </button>

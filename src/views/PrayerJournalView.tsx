@@ -69,9 +69,14 @@ export const PrayerJournalView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap sm:flex-nowrap">
           {prayers.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => exportPrayersToMarkdown(prayers)} className="gap-1.5 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportPrayersToMarkdown(prayers)}
+              className="gap-1.5 text-xs whitespace-nowrap shrink-0"
+            >
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>
             </Button>
@@ -82,7 +87,7 @@ export const PrayerJournalView: React.FC = () => {
               setEditingPrayer(null);
               setIsEditorOpen(true);
             }}
-            className="gap-2"
+            className="gap-2 whitespace-nowrap shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>New Prayer</span>
@@ -118,16 +123,15 @@ export const PrayerJournalView: React.FC = () => {
             </p>
             {!searchQuery && (
               <Button
-                variant="outline"
-                size="sm"
+                variant="primary"
                 onClick={() => {
                   setEditingPrayer(null);
                   setIsEditorOpen(true);
                 }}
-                className="mt-4 gap-1.5"
+                className="mt-4 gap-2 mx-auto"
               >
-                <Sparkles className="w-3.5 h-3.5 text-charis-primary" />
-                Write First Prayer
+                <Sparkles className="w-4 h-4" />
+                <span>Write First Prayer</span>
               </Button>
             )}
           </div>

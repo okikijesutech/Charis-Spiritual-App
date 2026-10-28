@@ -98,6 +98,7 @@ export const AccountSection: React.FC = () => {
               <button
                 onClick={handleSignOutClick}
                 className="text-xs text-charis-text-muted hover:text-rose-600 flex items-center gap-1 transition-colors mt-1"
+                title="Sign out of your session. Local drafts remain on this device unless cleared."
               >
                 <LogOut className="w-3 h-3" />
                 <span>Sign Out</span>
@@ -150,6 +151,9 @@ export const AccountSection: React.FC = () => {
               Switch Account
             </button>
           </div>
+          <p className="mt-2 text-[11px] text-charis-text-muted/80">
+            Signing out retains local drafts and offline translations on this device until explicitly cleared in Data & Privacy.
+          </p>
         </div>
       )}
     </div>

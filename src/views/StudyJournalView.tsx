@@ -78,13 +78,13 @@ export const StudyJournalView: React.FC<StudyJournalViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap sm:flex-nowrap">
           {studies.length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => exportStudiesToMarkdown(studies)}
-              className="gap-1.5 text-xs"
+              className="gap-1.5 text-xs whitespace-nowrap shrink-0"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export</span>
@@ -96,7 +96,7 @@ export const StudyJournalView: React.FC<StudyJournalViewProps> = ({
               setEditingStudy(null);
               setIsEditorOpen(true);
             }}
-            className="gap-2"
+            className="gap-2 whitespace-nowrap shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>New Study</span>
@@ -133,16 +133,15 @@ export const StudyJournalView: React.FC<StudyJournalViewProps> = ({
             </p>
             {!searchQuery && (
               <Button
-                variant="outline"
-                size="sm"
+                variant="primary"
                 onClick={() => {
                   setEditingStudy(null);
                   setIsEditorOpen(true);
                 }}
-                className="mt-4 gap-1.5"
+                className="mt-4 gap-2 mx-auto"
               >
-                <Sparkles className="w-3.5 h-3.5 text-charis-primary" />
-                Start First Study
+                <Sparkles className="w-4 h-4" />
+                <span>Start First Study</span>
               </Button>
             )}
           </div>

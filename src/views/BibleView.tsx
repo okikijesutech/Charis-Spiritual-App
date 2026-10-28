@@ -33,6 +33,18 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
 
+  // Desktop search shortcut (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const currentBook = getBookById(selectedBookId) || CANONICAL_BOOKS[0]; // Genesis default
   const currentTranslationMeta =
     SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0];
@@ -162,7 +174,7 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
       />
 
       {/* 2. Scripture Reading Surface */}
-      <article className="rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 shadow-card relative">
+      <article className="max-w-3xl mx-auto rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 shadow-card relative">
         {isLoading && (
           <div className="absolute inset-0 bg-charis-surface/60 backdrop-blur-[2px] flex items-center justify-center rounded-2xl z-20">
             <div className="flex items-center gap-2 text-sm text-charis-primary font-medium">
