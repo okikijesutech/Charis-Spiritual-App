@@ -22,7 +22,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <nav 
       aria-label="Mobile Navigation"
-      className="md:hidden shrink-0 z-30 w-full bg-charis-surface border-t border-charis-border pb-safe shadow-lg transition-colors select-none"
+      className="md:hidden shrink-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-t border-charis-border/80 pb-safe shadow-subtle transition-colors select-none"
     >
       <div className="grid grid-cols-5 h-16 items-center px-1">
         {tabs.map((tab) => {
@@ -40,7 +40,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
               }`}
               aria-current={isActive ? 'page' : undefined}
             >
-              <div className={`p-1 rounded-xl transition-transform ${isActive ? 'bg-[#D95740]/10 dark:bg-[#E06D58]/15 scale-110' : ''}`}>
+              <div className={`p-1 rounded-xl transition-transform ${isActive ? 'bg-charis-primary/10 scale-110' : ''}`}>
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.4]' : 'stroke-[1.8]'}`} />
               </div>
               <span className="text-[11px] tracking-tight mt-0.5">

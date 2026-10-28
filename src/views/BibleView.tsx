@@ -209,8 +209,8 @@ export const BibleView: React.FC<BibleViewProps> = ({ onAttachStudyNote }) => {
           {interactiveVerses.map((v) => {
             let highlightStyle = '';
             if (v.isHighlighted) {
-              if (v.highlightColor === 'terracotta') highlightStyle = 'bg-[#D95740]/15 dark:bg-[#E06D58]/20 px-1 rounded';
-              else if (v.highlightColor === 'sage') highlightStyle = 'bg-[#78866B]/15 dark:bg-[#8E9E80]/20 px-1 rounded';
+              if (v.highlightColor === 'terracotta') highlightStyle = 'bg-charis-primary/15 px-1 rounded';
+              else if (v.highlightColor === 'sage') highlightStyle = 'bg-charis-secondary/15 px-1 rounded';
               else highlightStyle = 'bg-amber-400/20 px-1 rounded';
             }
 

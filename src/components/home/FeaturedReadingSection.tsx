@@ -107,7 +107,7 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
       <div className="relative overflow-hidden rounded-2xl bg-charis-surface border border-charis-border p-6 shadow-card hover:border-charis-primary/40 transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-[#D95740]/10 dark:bg-[#E06D58]/15 text-charis-primary">
+            <span className="p-2 rounded-xl bg-charis-primary/10 text-charis-primary">
               <BookOpen className="w-5 h-5" />
             </span>
             <div>

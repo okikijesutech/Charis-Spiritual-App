@@ -16,8 +16,8 @@ export const Badge: React.FC<BadgeProps> = ({
   const sizeStyles = size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
 
   const variantStyles = {
-    sage: 'bg-[#78866B]/15 text-[#59664D] dark:bg-[#8E9E80]/20 dark:text-[#A7B798] border border-[#78866B]/20',
-    terracotta: 'bg-[#D95740]/15 text-[#B6422D] dark:bg-[#E06D58]/20 dark:text-[#F39180] border border-[#D95740]/20',
+    sage: 'bg-charis-secondary/15 text-charis-secondary border border-charis-secondary/25',
+    terracotta: 'bg-charis-primary/15 text-charis-primary border border-charis-primary/25',
     neutral: 'bg-charis-border-subtle text-charis-text-muted border border-charis-border/60',
     outline: 'border border-charis-border text-charis-text-muted bg-transparent'
   }

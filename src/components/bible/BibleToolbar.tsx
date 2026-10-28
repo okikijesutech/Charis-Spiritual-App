@@ -52,18 +52,18 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
             value={selectedBookId}
             onChange={(e) => onBookChange(e.target.value)}
             aria-label="Select book of the Bible"
-            className="appearance-none font-serif font-bold text-sm sm:text-base bg-charis-surface text-charis-text border border-charis-border rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA]"
+            className="appearance-none font-serif font-bold text-sm sm:text-base bg-charis-surface text-charis-text border border-charis-border rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle"
           >
             <optgroup label="Old Testament">
               {CANONICAL_BOOKS.filter((b) => b.testament === 'OT').map((b) => (
-                <option key={b.id} value={b.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
+                <option key={b.id} value={b.id} className="bg-charis-surface text-charis-text py-1.5">
                   {b.name}
                 </option>
               ))}
             </optgroup>
             <optgroup label="New Testament">
               {CANONICAL_BOOKS.filter((b) => b.testament === 'NT').map((b) => (
-                <option key={b.id} value={b.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
+                <option key={b.id} value={b.id} className="bg-charis-surface text-charis-text py-1.5">
                   {b.name}
                 </option>
               ))}
@@ -73,7 +73,7 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
         </div>
 
         {/* Chapter Selector & Stepper */}
-        <div className="flex items-center gap-1 border border-charis-border rounded-xl px-1.5 py-1 bg-charis-surface dark:bg-[#1B1E2B]">
+        <div className="flex items-center gap-1 border border-charis-border rounded-xl px-1.5 py-1 bg-charis-surface">
           <button
             onClick={onPrevChapter}
             disabled={selectedChapterNumber <= 1}
@@ -87,10 +87,10 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
             value={selectedChapterNumber}
             onChange={(e) => onChapterChange(parseInt(e.target.value, 10))}
             aria-label="Select chapter"
-            className="appearance-none font-sans font-semibold text-xs bg-transparent text-charis-text px-2 py-0.5 focus:outline-none cursor-pointer dark:text-[#F3EFEA]"
+            className="appearance-none font-sans font-semibold text-xs bg-transparent text-charis-text px-2 py-0.5 focus:outline-none cursor-pointer"
           >
             {Array.from({ length: chapterCount }, (_, i) => i + 1).map((ch) => (
-              <option key={ch} value={ch} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA]">
+              <option key={ch} value={ch} className="bg-charis-surface text-charis-text">
                 Ch {ch}
               </option>
             ))}
@@ -111,11 +111,11 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
           <select
             value={selectedTranslation}
             onChange={(e) => onTranslationChange(e.target.value)}
-            className="appearance-none font-sans font-semibold text-xs bg-charis-surface text-charis-text border border-charis-border rounded-xl px-2.5 sm:px-3 py-2 pr-6 sm:pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA] max-w-[100px] sm:max-w-none truncate"
+            className="appearance-none font-sans font-semibold text-xs bg-charis-surface text-charis-text border border-charis-border rounded-xl px-2.5 sm:px-3 py-2 pr-6 sm:pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle max-w-[100px] sm:max-w-none truncate"
             aria-label="Select Bible translation"
           >
             {SUPPORTED_TRANSLATIONS.map((t) => (
-              <option key={t.id} value={t.id} className="bg-charis-surface text-charis-text dark:bg-[#1B1E2B] dark:text-[#F3EFEA] py-1.5">
+              <option key={t.id} value={t.id} className="bg-charis-surface text-charis-text py-1.5">
                 {t.shortName} — {t.name}
               </option>
             ))}
@@ -126,7 +126,7 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
         {/* Quick Search Button */}
         <button
           onClick={onOpenSearch}
-          className="p-2 sm:px-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text transition-colors flex items-center gap-1.5 text-xs shadow-subtle dark:bg-[#1B1E2B] shrink-0"
+          className="p-2 sm:px-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text transition-colors flex items-center gap-1.5 text-xs shadow-subtle shrink-0"
           title="Search all 66 books or topics (Ctrl+K / ⌘K)"
           aria-label="Search Scripture (Ctrl+K)"
         >

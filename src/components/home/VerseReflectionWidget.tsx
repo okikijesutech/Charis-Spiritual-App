@@ -23,7 +23,7 @@ export const VerseReflectionWidget: React.FC<VerseReflectionWidgetProps> = ({ on
           </span>
           <span className="text-xs text-charis-text-muted font-serif">Psalm 23:2–3</span>
         </div>
-        <blockquote className="font-serif italic text-base sm:text-lg text-charis-text leading-relaxed pl-3 border-l-2 border-[#D95740] dark:border-[#E06D58] my-3">
+        <blockquote className="font-serif italic text-base sm:text-lg text-charis-text leading-relaxed pl-3 border-l-2 border-charis-primary my-3">
           “He makes me lie down in green pastures; He leads me beside quiet waters. He restores my soul.”
         </blockquote>
       </div>

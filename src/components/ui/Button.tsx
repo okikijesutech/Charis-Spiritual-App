@@ -22,11 +22,11 @@ export const Button: React.FC<ButtonProps> = ({
   }
 
   const variantStyles = {
-    primary: 'bg-[#D95740] dark:bg-[#E06D58] text-white hover:bg-[#C24B36] dark:hover:bg-[#E8806D] shadow-sm',
-    secondary: 'bg-[#78866B] dark:bg-[#8E9E80] text-white hover:bg-[#67745B] dark:hover:bg-[#9EAF8F] shadow-sm',
+    primary: 'bg-charis-primary text-white hover:bg-charis-primary-hover shadow-sm',
+    secondary: 'bg-charis-secondary text-white hover:opacity-90 shadow-sm',
     outline: 'border border-charis-border bg-charis-surface text-charis-text hover:bg-charis-border-subtle',
-    ghost: 'text-charis-text hover:bg-charis-border-subtle text-charis-text-muted hover:text-charis-text',
-    'terracotta-soft': 'bg-[#D95740]/10 text-[#D95740] dark:text-[#E8806D] hover:bg-[#D95740]/15',
+    ghost: 'text-charis-text-muted hover:text-charis-text hover:bg-charis-border-subtle',
+    'terracotta-soft': 'bg-charis-primary/10 text-charis-primary hover:bg-charis-primary/15',
   }
 
   return (

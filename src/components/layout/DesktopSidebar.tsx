@@ -51,7 +51,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       <div className="p-4 pb-2">
         <button
           onClick={onQuickAction}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#D95740] dark:bg-[#E06D58] hover:bg-[#C24B36] text-white font-medium text-sm transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary"
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white font-medium text-sm transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary"
         >
           <PlusCircle className="w-4 h-4" />
           <span>Record Reflection</span>
@@ -70,14 +70,14 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
               onClick={() => onSelectTab(item.id)}
               className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-xl transition-all text-left group ${
                 isActive
-                  ? 'bg-[#D95740]/10 dark:bg-[#E06D58]/15 text-[#D95740] dark:text-[#E8806D] font-medium'
+                  ? 'bg-charis-primary/10 text-charis-primary font-medium'
                   : 'text-charis-text-muted hover:text-charis-text hover:bg-charis-border-subtle'
               }`}
               aria-current={isActive ? 'page' : undefined}
             >
               <div className={`p-1.5 rounded-lg transition-colors ${
                 isActive 
-                  ? 'bg-[#D95740]/15 dark:bg-[#E06D58]/25 text-[#D95740] dark:text-[#E8806D]' 
+                  ? 'bg-charis-primary/15 text-charis-primary' 
                   : 'text-charis-text-muted group-hover:text-charis-text'
               }`}>
                 <Icon className="w-5 h-5 stroke-[2]" />

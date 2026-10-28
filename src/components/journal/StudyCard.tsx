@@ -187,8 +187,8 @@ export const StudyCard: React.FC<StudyCardProps> = ({
 
           {/* Application */}
           {study.application && (
-            <div className="p-3.5 rounded-xl bg-[#78866B]/10 dark:bg-[#8E9E80]/15 border border-[#78866B]/20">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-[#5A684F] dark:text-[#A7B798] mb-1">
+            <div className="p-3.5 rounded-xl bg-charis-secondary/10 border border-charis-secondary/20">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-charis-secondary mb-1">
                 4. Application (How does it shape my walk?)
               </h4>
               <p className="font-serif text-charis-text leading-relaxed font-medium whitespace-pre-wrap text-xs sm:text-sm">

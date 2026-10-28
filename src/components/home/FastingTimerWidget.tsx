@@ -47,8 +47,8 @@ export const FastingTimerWidget: React.FC<FastingTimerWidgetProps> = ({ userId }
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Timer className="w-4 h-4 text-[#78866B] dark:text-[#8E9E80]" />
-                <span className="text-xs font-semibold text-[#78866B] dark:text-[#8E9E80] uppercase tracking-wider">
+                <Timer className="w-4 h-4 text-charis-secondary" />
+                <span className="text-xs font-semibold text-charis-secondary uppercase tracking-wider">
                   Fasting Rhythm
                 </span>
               </div>
@@ -101,8 +101,8 @@ export const FastingTimerWidget: React.FC<FastingTimerWidgetProps> = ({ userId }
         <div>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Timer className="w-4 h-4 text-[#78866B] dark:text-[#8E9E80]" />
-              <span className="text-xs font-semibold text-[#78866B] dark:text-[#8E9E80] uppercase tracking-wider">
+              <Timer className="w-4 h-4 text-charis-secondary" />
+              <span className="text-xs font-semibold text-charis-secondary uppercase tracking-wider">
                 Fasting Rhythm
               </span>
             </div>
@@ -128,7 +128,7 @@ export const FastingTimerWidget: React.FC<FastingTimerWidgetProps> = ({ userId }
             </div>
             <div className="w-full h-2 rounded-full bg-charis-border-subtle overflow-hidden">
               <div
-                className="h-full bg-[#78866B] dark:bg-[#8E9E80] rounded-full transition-all duration-500"
+                className="h-full bg-charis-secondary rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

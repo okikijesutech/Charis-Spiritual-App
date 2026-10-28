@@ -40,7 +40,7 @@ export const ScriptureSearchModal: React.FC<ScriptureSearchModalProps> = ({
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Type book, chapter, or topic..."
           autoFocus
-          className="w-full px-3.5 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-charis-text focus:outline-none focus:ring-2 focus:ring-charis-primary text-sm shadow-subtle dark:bg-[#1B1E2B] dark:text-[#F3EFEA]"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-charis-border bg-charis-surface text-charis-text focus:outline-none focus:ring-2 focus:ring-charis-primary text-sm shadow-subtle"
         />
 
         <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -49,7 +49,7 @@ export const ScriptureSearchModal: React.FC<ScriptureSearchModalProps> = ({
               <button
                 key={`${res.formattedRef}-${idx}`}
                 onClick={() => onSelectResult(res)}
-                className="w-full p-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-left transition-colors flex items-start gap-2.5 dark:bg-[#1B1E2B]"
+                className="w-full p-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-left transition-colors flex items-start gap-2.5"
               >
                 <Sparkles className="w-4 h-4 text-charis-primary shrink-0 mt-0.5" />
                 <div>
@@ -74,7 +74,7 @@ export const ScriptureSearchModal: React.FC<ScriptureSearchModalProps> = ({
                   <button
                     key={t}
                     onClick={() => onSearch(t)}
-                    className="px-2.5 py-1 rounded-lg border border-charis-border bg-charis-surface hover:bg-charis-border-subtle capitalize dark:bg-[#1B1E2B]"
+                    className="px-2.5 py-1 rounded-lg border border-charis-border bg-charis-surface hover:bg-charis-border-subtle capitalize"
                   >
                     {t}
                   </button>

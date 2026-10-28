@@ -120,7 +120,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <div className="flex items-center gap-2">
           <Badge variant="sage" className="px-3 py-1 text-xs">
-            <span className="w-2 h-2 rounded-full bg-[#78866B] animate-pulse mr-1" />
+            <span className="w-2 h-2 rounded-full bg-charis-secondary animate-pulse mr-1" />
             {todayReflectionCount === null
               ? 'Checking rhythm...'
               : todayReflectionCount === 0

@@ -50,7 +50,7 @@ export const Modal: React.FC<ModalProps> = ({
       />
 
       {/* Content panel: Centered dialog on both mobile & desktop */}
-      <div className={`relative w-full ${maxWidth} bg-charis-surface border border-charis-border rounded-2xl shadow-2xl overflow-hidden z-10 max-h-[88dvh] flex flex-col transform transition-all dark:bg-[#1B1E2B]`}>
+      <div className={`relative w-full ${maxWidth} bg-charis-surface border border-charis-border rounded-2xl shadow-card overflow-hidden z-10 max-h-[88dvh] flex flex-col transform transition-all`}>
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 pt-4 pb-3.5 border-b border-charis-border/60">
           <div className="min-w-0 pr-3">

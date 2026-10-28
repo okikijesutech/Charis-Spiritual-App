@@ -83,13 +83,13 @@ export const VerseActionModal: React.FC<VerseActionModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onHighlight('terracotta')}
-              className="flex-1 py-1.5 px-2 rounded-lg bg-[#D95740]/15 dark:bg-[#E06D58]/20 text-[#D95740] dark:text-[#E06D58] text-xs font-medium border border-[#D95740]/30 hover:brightness-105"
+              className="flex-1 py-1.5 px-2 rounded-lg bg-charis-primary/15 text-charis-primary text-xs font-medium border border-charis-primary/30 hover:brightness-105"
             >
               Terracotta
             </button>
             <button
               onClick={() => onHighlight('sage')}
-              className="flex-1 py-1.5 px-2 rounded-lg bg-[#78866B]/15 dark:bg-[#8E9E80]/20 text-[#78866B] dark:text-[#8E9E80] text-xs font-medium border border-[#78866B]/30 hover:brightness-105"
+              className="flex-1 py-1.5 px-2 rounded-lg bg-charis-secondary/15 text-charis-secondary text-xs font-medium border border-charis-secondary/30 hover:brightness-105"
             >
               Sage
             </button>
