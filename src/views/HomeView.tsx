@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, SlidersHorizontal } from 'lucide-react';
 import { mockUserProfile } from '../data/mockData';
 import { RecentActivitySection } from '../components/home/RecentActivitySection';
@@ -11,6 +11,7 @@ import { useUserSettings } from '../hooks/useUserSettings';
 import { useAuth } from '../context/AuthContext';
 import { NavDestination } from '../types';
 import { Badge } from '../components/ui/Badge';
+import { activityRepository } from '../lib/db/activity-repository';
 
 interface HomeViewProps {
   onNavigate: (tab: NavDestination) => void;
@@ -31,6 +32,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
     moveWidget,
     resetLayout,
   } = useUserSettings(activeUserId);
+
+  const [todayReflectionCount, setTodayReflectionCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    activityRepository.list(activeUserId).then((items) => {
+      if (isMounted) {
+        const todayStr = new Date().toDateString();
+        const count = items.filter((a) => new Date(a.startedAt).toDateString() === todayStr).length;
+        setTodayReflectionCount(count);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeUserId]);
 
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
@@ -104,7 +121,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="flex items-center gap-2">
           <Badge variant="sage" className="px-3 py-1 text-xs">
             <span className="w-2 h-2 rounded-full bg-[#78866B] animate-pulse mr-1" />
-            4 spiritual rhythms active
+            {todayReflectionCount === null
+              ? 'Checking rhythm...'
+              : todayReflectionCount === 0
+              ? 'No reflections logged today'
+              : `${todayReflectionCount} ${todayReflectionCount === 1 ? 'reflection' : 'reflections'} logged today`}
           </Badge>
 
           <button

@@ -67,30 +67,30 @@ export const RecentActivitySection: React.FC<RecentActivitySectionProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-serif font-bold text-lg text-charis-text">
-            Recent Spiritual Rhythm
+            Recent Reflections
           </h3>
           <p className="text-xs text-charis-text-muted mt-0.5">
             Reflective record of prayer, reading, and study sessions
           </p>
         </div>
         <Badge variant="neutral" size="sm">
-          {activities.length} {activities.length === 1 ? 'session' : 'sessions'} recorded
+          {activities.length} {activities.length === 1 ? 'total session' : 'total sessions'} recorded
         </Badge>
       </div>
 
       {activities.length === 0 ? (
         <div className="py-6 text-center">
           <p className="text-xs text-charis-text-muted">
-            No spiritual rhythms recorded yet. Track quiet moments without pressure.
+            No reflections recorded yet. Track quiet moments without pressure.
           </p>
           <Button
             size="sm"
-            variant="outline"
+            variant="primary"
             onClick={onOpenQuickAction}
             className="mt-3 gap-1.5 text-xs mx-auto"
           >
-            <Plus className="w-3.5 h-3.5 text-charis-primary" />
-            Record First Rhythm
+            <Plus className="w-3.5 h-3.5" />
+            <span>Record First Reflection</span>
           </Button>
         </div>
       ) : (

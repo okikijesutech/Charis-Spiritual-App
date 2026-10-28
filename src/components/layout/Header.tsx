@@ -155,7 +155,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <>
                   <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="text-[11px] sm:text-xs font-medium">Online</span>
-                  <span className="text-[10px] opacity-75 hidden sm:inline">({statusText})</span>
+                  <span className="text-[10px] opacity-75 hidden sm:inline">
+                    ({pendingCount > 0 ? `Sync pending (${pendingCount})` : statusText})
+                  </span>
                 </>
               )}
             </button>

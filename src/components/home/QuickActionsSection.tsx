@@ -32,7 +32,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
             <BookOpen className="w-5 h-5" />
           </div>
           <span className="text-sm font-semibold text-charis-text">Read Bible</span>
-          <span className="text-[11px] text-charis-text-muted mt-0.5">Psalm 23 & John</span>
+          <span className="text-[11px] text-charis-text-muted mt-0.5">Continue reading</span>
         </button>
 
         <button
@@ -64,7 +64,7 @@ export const QuickActionsSection: React.FC<QuickActionsSectionProps> = ({
           <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 mb-2 group-hover:scale-105 transition-transform">
             <CalendarCheck className="w-5 h-5" />
           </div>
-          <span className="text-sm font-semibold text-charis-text">Log Activity</span>
+          <span className="text-sm font-semibold text-charis-text">Record Reflection</span>
           <span className="text-[11px] text-charis-text-muted mt-0.5">Prayer, study, fast</span>
         </button>
       </div>

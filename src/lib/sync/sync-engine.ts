@@ -21,7 +21,7 @@ export interface SyncEngineStatus {
   isSyncing: boolean;
   pendingCount: number;
   lastSyncedAt: string | null;
-  statusText: 'Saved on this device' | 'Syncing' | 'Synced' | 'Needs attention';
+  statusText: 'Saved on this device' | 'Syncing' | 'Sync pending' | 'Synced' | 'Needs attention';
 }
 
 type StatusListener = (status: SyncEngineStatus) => void;
@@ -59,7 +59,7 @@ export class SyncEngine {
     if (this.isSyncing) {
       statusText = 'Syncing';
     } else if (pendingCount > 0) {
-      statusText = isOnline ? 'Syncing' : 'Saved on this device';
+      statusText = isOnline ? 'Sync pending' : 'Saved on this device';
     } else if (this.lastSyncedAt) {
       statusText = 'Synced';
     }

@@ -72,7 +72,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Record Spiritual Rhythm"
+      title="Record Reflection"
       description="Reflective tracking with grace. No streaks or judgment."
       maxWidth="max-w-md"
     >
@@ -148,7 +148,7 @@ export const QuickActionModal: React.FC<QuickActionModalProps> = ({
             type="submit"
             variant="primary"
           >
-            Save Rhythm
+            Save Reflection
           </Button>
         </div>
       </form>
