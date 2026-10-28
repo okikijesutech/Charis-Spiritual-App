@@ -77,6 +77,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const visibleWidgets = layout.widgets.filter((w) => w.visible);
 
+  const formattedToday = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date());
+  const displayTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || mockUserProfile.timeZone || 'UTC';
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* 1. Greeting & Date Banner */}
@@ -90,7 +97,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             Peace be with you, {(profile?.display_name || user?.user_metadata?.full_name || mockUserProfile.name).split(' ')[0]}
           </h2>
           <p className="text-xs sm:text-sm text-charis-text-muted mt-1 font-sans">
-            Saturday, October 24 · {mockUserProfile.timeZone}
+            {formattedToday} · {displayTimeZone}
           </p>
         </div>
 

@@ -1,0 +1,38 @@
+name: Charis CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Lint, Security & Offline Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.20.0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Architecture & Security Verification
+        run: pnpm run security:check
+
+      - name: Run Offline Sync & Resilience Tests
+        run: pnpm run test:offline
+
+      - name: Type Check & Production PWA Build
+        run: pnpm run build

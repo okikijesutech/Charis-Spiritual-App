@@ -64,11 +64,22 @@ export const LicencesModal: React.FC<LicencesModalProps> = ({
           ))}
         </div>
 
-        {/* Software & Open Source Credits */}
+        {/* Charis Application License */}
         <div className="p-3 rounded-xl bg-charis-surface border border-charis-border space-y-1.5">
           <div className="flex items-center gap-1.5 font-semibold text-charis-text">
             <BookMarked className="w-3.5 h-3.5 text-charis-primary" />
-            <span>Open Source Software</span>
+            <span>Charis Application Licence</span>
+          </div>
+          <p className="text-charis-text-muted text-[11px] leading-relaxed">
+            Free for personal devotion, study, and non-profit church ministries. Commercial use, monetisation, or profiting from the software, hosted services, or derivative works is strictly prohibited without prior express written permission.
+          </p>
+        </div>
+
+        {/* Software & Open Source Credits */}
+        <div className="p-3 rounded-xl bg-charis-surface border border-charis-border space-y-1.5">
+          <div className="flex items-center gap-1.5 font-semibold text-charis-text">
+            <Scale className="w-3.5 h-3.5 text-charis-primary" />
+            <span>Third-Party Open Source Libraries</span>
           </div>
           <p className="text-charis-text-muted text-[11px] leading-relaxed">
             Built with React, TypeScript, Vite, Tailwind CSS, Lucide Icons, idb (IndexedDB), and Supabase JS Client under permissive MIT and Apache 2.0 open source licenses.
