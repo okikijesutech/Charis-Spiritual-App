@@ -27,10 +27,22 @@ export interface QuietHours {
   end: string;   // e.g. "07:00" (24-hour HH:mm)
 }
 
+export type SoundTheme = 'bowl' | 'harp' | 'cathedral';
+
+export interface ScheduledReminder {
+  id: string;
+  type: 'prayer' | 'reading';
+  label: string;
+  time: string; // "HH:mm"
+  soundTheme: SoundTheme;
+  enabled: boolean;
+}
+
 export interface ReminderPreferences {
   enabled: boolean;
   dailyPrayerTime?: string;      // "08:00"
   dailyReadingTime?: string;     // "20:00"
+  reminders?: ScheduledReminder[];
   quietHours: QuietHours;
   fastingMilestones: boolean;
   pushSubscription?: Record<string, unknown> | null;
@@ -81,10 +93,30 @@ export const DEFAULT_WIDGET_CONFIGS: DashboardWidgetConfig[] = [
   },
 ];
 
+export const DEFAULT_SCHEDULED_REMINDERS: ScheduledReminder[] = [
+  {
+    id: 'default-prayer-morning',
+    type: 'prayer',
+    label: 'Morning Prayer',
+    time: '08:00',
+    soundTheme: 'bowl',
+    enabled: true,
+  },
+  {
+    id: 'default-reading-evening',
+    type: 'reading',
+    label: 'Evening Scripture',
+    time: '20:00',
+    soundTheme: 'harp',
+    enabled: true,
+  },
+];
+
 export const DEFAULT_REMINDER_PREFERENCES: ReminderPreferences = {
   enabled: false,
   dailyPrayerTime: '08:00',
   dailyReadingTime: '20:00',
+  reminders: DEFAULT_SCHEDULED_REMINDERS,
   quietHours: {
     enabled: true,
     start: '22:00',

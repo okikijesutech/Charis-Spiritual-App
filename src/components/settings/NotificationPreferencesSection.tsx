@@ -1,15 +1,16 @@
 /**
  * Notification & Reminder Preferences Section
- * Manages daily prayer/reading alarms, quiet period suppression,
+ * Manages multiple prayer/reading alarms with distinct sounds, quiet period suppression,
  * and browser notification permissions.
  * Per docs/PRD.md FR-09 and docs/SECURITY.md.
  */
 
 import React, { useState } from 'react';
-import { Bell, Moon, Clock, ShieldCheck, AlertCircle, Volume2, VolumeX, Play } from 'lucide-react';
+import { Bell, Moon, ShieldCheck, AlertCircle, Volume2, VolumeX, Play } from 'lucide-react';
 import { notificationManager, NotificationPermissionState } from '../../lib/notifications/notification-manager';
 import { soundAlarmService } from '../../lib/audio/sound-alarm';
 import { ReminderPreferences } from '../../types/settings';
+import { ScheduledRemindersList } from './ScheduledRemindersList';
 
 interface NotificationPreferencesSectionProps {
   preferences: ReminderPreferences;
@@ -29,7 +30,7 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
 
   const handleTestChime = async () => {
     setIsTestingChime(true);
-    soundAlarmService.playContemplativeSequence();
+    soundAlarmService.playTheme('cathedral');
     await notificationManager.sendContemplativeReminder(
       {
         title: 'Charis Sacred Chime',
@@ -94,7 +95,7 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
           <div>
             <span className="font-semibold block mb-0.5">Notifications Blocked by Browser</span>
             <p className="opacity-90 leading-relaxed text-[11px]">
-              To receive daily rhythm notifications, please allow permissions in your browser address bar or site settings.
+              To receive daily rhythm notifications on Android or desktop, please allow permissions in your browser address bar or site settings.
             </p>
           </div>
         </div>
@@ -114,41 +115,14 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
 
       {/* Preferences Options (Only visible when enabled) */}
       {preferences.enabled && (
-        <div className="space-y-3 pt-2">
-          {/* Daily Reading & Prayer Times */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl bg-charis-surface border border-charis-border">
-              <label className="text-[11px] font-medium text-charis-text-muted flex items-center gap-1.5 mb-1.5">
-                <Clock className="w-3.5 h-3.5 text-charis-primary" />
-                <span>Daily Scripture Reading</span>
-              </label>
-              <input
-                type="time"
-                value={preferences.dailyReadingTime || '20:00'}
-                onChange={(e) =>
-                  onUpdate({ ...preferences, dailyReadingTime: e.target.value })
-                }
-                className="w-full bg-charis-border-subtle/50 border border-charis-border rounded-lg px-2.5 py-1 text-xs text-charis-text focus:outline-none focus:border-charis-primary"
-              />
-            </div>
+        <div className="space-y-3.5 pt-2">
+          {/* Multiple Scheduled Rhythms with Individual Sound Themes */}
+          <ScheduledRemindersList
+            reminders={preferences.reminders}
+            onUpdate={(reminders) => onUpdate({ ...preferences, reminders })}
+          />
 
-            <div className="p-3 rounded-xl bg-charis-surface border border-charis-border">
-              <label className="text-[11px] font-medium text-charis-text-muted flex items-center gap-1.5 mb-1.5">
-                <Clock className="w-3.5 h-3.5 text-charis-primary" />
-                <span>Daily Prayer Stillness</span>
-              </label>
-              <input
-                type="time"
-                value={preferences.dailyPrayerTime || '08:00'}
-                onChange={(e) =>
-                  onUpdate({ ...preferences, dailyPrayerTime: e.target.value })
-                }
-                className="w-full bg-charis-border-subtle/50 border border-charis-border rounded-lg px-2.5 py-1 text-xs text-charis-text focus:outline-none focus:border-charis-primary"
-              />
-            </div>
-          </div>
-
-          {/* Sound Alarm Chime & Preview */}
+          {/* Master Sound Alarm Chime & Preview */}
           <div className="p-3.5 rounded-xl bg-charis-surface border border-charis-border space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -159,10 +133,10 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
                 )}
                 <div>
                   <span className="text-xs font-semibold text-charis-text block">
-                    Sound Alarm Chime
+                    Sound Alarm Chimes
                   </span>
                   <span className="text-[11px] text-charis-text-muted block">
-                    Resonant singing bowl & sacred chime sequence (528Hz)
+                    Play sacred bell and harp chimes when reminders trigger
                   </span>
                 </div>
               </div>
@@ -190,7 +164,7 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
             {/* Test Preview Button */}
             <div className="pt-2 flex items-center justify-between border-t border-charis-border/50">
               <span className="text-[11px] text-charis-text-muted">
-                Preview sound alarm and notification
+                Preview test chime and notification
               </span>
               <button
                 type="button"
