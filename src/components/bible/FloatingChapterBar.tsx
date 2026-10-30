@@ -5,6 +5,7 @@
  */
 
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 
 interface FloatingChapterBarProps {
@@ -28,7 +29,9 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
   onNextChapter,
   onOpenPicker,
 }) => {
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <aside
       aria-label="Quick Chapter Navigation"
       className={`md:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ease-in-out ${
@@ -83,6 +86,7 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
           <ChevronRight className="w-3.5 h-3.5 text-charis-primary" />
         </button>
       </div>
-    </aside>
+    </aside>,
+    document.body
   )
 }
