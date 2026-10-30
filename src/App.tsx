@@ -11,9 +11,12 @@ import { PlansView } from './views/PlansView'
 import { SettingsModal } from './components/modals/SettingsModal'
 import { QuickActionModal } from './components/modals/QuickActionModal'
 import { AuthModal } from './components/modals/AuthModal'
+import { ReminderAlertBanner } from './components/notifications/ReminderAlertBanner'
 import { NavDestination } from './types'
 import type { ActivityLog } from './types/activity'
 import { useAuth } from './context/AuthContext'
+import { useUserSettings } from './hooks/useUserSettings'
+import { useReminderScheduler } from './hooks/useReminderScheduler'
 import { activityRepository } from './lib/db/activity-repository'
 import { syncQueueManager } from './lib/sync/sync-queue'
 import { syncEngine } from './lib/sync/sync-engine'
@@ -22,6 +25,9 @@ import { generateUUID } from './lib/id'
 export const AppContent: React.FC = () => {
   const { user } = useAuth()
   const activeUserId = user?.id || 'demo-user-id'
+
+  const { reminderPreferences, settings } = useUserSettings(activeUserId)
+  const { activeAlert, dismissAlert } = useReminderScheduler(reminderPreferences, settings?.timezone)
 
   const [currentTab, setCurrentTab] = useState<NavDestination>('home')
   const [isOffline, setIsOffline] = useState<boolean>(false)
@@ -119,6 +125,13 @@ export const AppContent: React.FC = () => {
         onClose={() => setIsQuickActionOpen(false)}
         onAddActivity={handleAddActivity}
         userId={activeUserId}
+      />
+
+      {/* Contemplative Reminder Sound & Notification Banner */}
+      <ReminderAlertBanner
+        alert={activeAlert}
+        onDismiss={dismissAlert}
+        onNavigate={handleSelectTab}
       />
     </AppShell>
   )

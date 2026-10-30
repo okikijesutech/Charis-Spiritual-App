@@ -34,6 +34,7 @@ export interface ReminderPreferences {
   quietHours: QuietHours;
   fastingMilestones: boolean;
   pushSubscription?: Record<string, unknown> | null;
+  soundEnabled?: boolean;
 }
 
 export interface LocalUserSettings {
@@ -91,4 +92,5 @@ export const DEFAULT_REMINDER_PREFERENCES: ReminderPreferences = {
   },
   fastingMilestones: true,
   pushSubscription: null,
+  soundEnabled: true,
 };

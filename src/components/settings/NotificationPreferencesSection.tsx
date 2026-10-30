@@ -6,17 +6,9 @@
  */
 
 import React, { useState } from 'react';
-import { 
-  Bell, 
-  Moon, 
-  Clock, 
-  ShieldCheck, 
-  AlertCircle 
-} from 'lucide-react';
-import { 
-  notificationManager, 
-  NotificationPermissionState 
-} from '../../lib/notifications/notification-manager';
+import { Bell, Moon, Clock, ShieldCheck, AlertCircle, Volume2, VolumeX, Play } from 'lucide-react';
+import { notificationManager, NotificationPermissionState } from '../../lib/notifications/notification-manager';
+import { soundAlarmService } from '../../lib/audio/sound-alarm';
 import { ReminderPreferences } from '../../types/settings';
 
 interface NotificationPreferencesSectionProps {
@@ -28,10 +20,27 @@ interface NotificationPreferencesSectionProps {
 export const NotificationPreferencesSection: React.FC<NotificationPreferencesSectionProps> = ({
   preferences,
   onUpdate,
+  timeZone,
 }) => {
   const [permission, setPermission] = useState<NotificationPermissionState>(
     notificationManager.getPermission()
   );
+  const [isTestingChime, setIsTestingChime] = useState(false);
+
+  const handleTestChime = async () => {
+    setIsTestingChime(true);
+    soundAlarmService.playContemplativeSequence();
+    await notificationManager.sendContemplativeReminder(
+      {
+        title: 'Charis Sacred Chime',
+        body: 'Your contemplative reminder and chime alarm are active and working.',
+        tag: 'charis-test-rhythm',
+      },
+      { ...preferences, enabled: true, quietHours: { ...preferences.quietHours, enabled: false } },
+      timeZone
+    );
+    setTimeout(() => setIsTestingChime(false), 2400);
+  };
 
   const handleRequestPermission = async () => {
     const res = await notificationManager.requestPermission();
@@ -136,6 +145,62 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
                 }
                 className="w-full bg-charis-border-subtle/50 border border-charis-border rounded-lg px-2.5 py-1 text-xs text-charis-text focus:outline-none focus:border-charis-primary"
               />
+            </div>
+          </div>
+
+          {/* Sound Alarm Chime & Preview */}
+          <div className="p-3.5 rounded-xl bg-charis-surface border border-charis-border space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {preferences.soundEnabled !== false ? (
+                  <Volume2 className="w-4 h-4 text-charis-primary" />
+                ) : (
+                  <VolumeX className="w-4 h-4 text-charis-text-muted" />
+                )}
+                <div>
+                  <span className="text-xs font-semibold text-charis-text block">
+                    Sound Alarm Chime
+                  </span>
+                  <span className="text-[11px] text-charis-text-muted block">
+                    Resonant singing bowl & sacred chime sequence (528Hz)
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  onUpdate({
+                    ...preferences,
+                    soundEnabled: preferences.soundEnabled === false,
+                  })
+                }
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  preferences.soundEnabled !== false ? 'bg-charis-primary' : 'bg-charis-border'
+                }`}
+                aria-label="Toggle sound chime"
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                    preferences.soundEnabled !== false ? 'translate-x-4' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Test Preview Button */}
+            <div className="pt-2 flex items-center justify-between border-t border-charis-border/50">
+              <span className="text-[11px] text-charis-text-muted">
+                Preview sound alarm and notification
+              </span>
+              <button
+                type="button"
+                onClick={handleTestChime}
+                disabled={isTestingChime}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-charis-border-subtle/80 hover:bg-charis-border text-charis-text text-xs font-medium transition-colors cursor-pointer"
+              >
+                <Play className={`w-3 h-3 text-charis-primary ${isTestingChime ? 'animate-pulse' : ''}`} />
+                <span>{isTestingChime ? 'Chiming...' : 'Test Sound'}</span>
+              </button>
             </div>
           </div>
 
