@@ -19,7 +19,7 @@ interface VerseActionModalProps {
   onToggleBookmark: (v: InteractiveVerse) => void;
   onCopy: () => void;
   onHighlight: (color: 'terracotta' | 'sage' | 'amber' | 'none') => void;
-  onAttachStudyNote?: (ref: string) => void;
+  onAttachStudyNote?: (ref: string, verseText?: string) => void;
 }
 
 export const VerseActionModal: React.FC<VerseActionModalProps> = ({
@@ -109,7 +109,7 @@ export const VerseActionModal: React.FC<VerseActionModalProps> = ({
             const ref = `${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${translationShortName})`
             onClose()
             if (onAttachStudyNote) {
-              onAttachStudyNote(ref)
+              onAttachStudyNote(ref, activeVerse.text)
             }
           }}
         >

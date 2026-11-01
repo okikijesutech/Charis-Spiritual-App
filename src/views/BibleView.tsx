@@ -8,7 +8,9 @@ import { ScriptureSearchModal } from '../components/bible/ScriptureSearchModal';
 import { FloatingChapterBar } from '../components/bible/FloatingChapterBar';
 import { BookChapterPickerModal } from '../components/bible/BookChapterPickerModal';
 import { ScriptureReadingSurface } from '../components/bible/ScriptureReadingSurface';
+import { AssistedSOAPDrawer } from '../components/bible/AssistedSOAPDrawer';
 import { getLastBiblePosition, saveLastBiblePosition } from '../lib/bible/persistence';
+import { useAuth } from '../context/AuthContext';
 import type { BibleChapter } from '../types/bible';
 
 interface BibleViewProps {
@@ -53,11 +55,24 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const [copiedNotification, setCopiedNotification] = useState(false);
   const [targetVerseNumber, setTargetVerseNumber] = useState<number | null>(null);
 
-  // Search modal state
+  const { user } = useAuth();
+  const activeUserId = user?.id || 'demo-user-id';
+
+  // Search, Picker & Assisted SOAP drawer state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isSOAPDrawerOpen, setIsSOAPDrawerOpen] = useState(false);
+  const [soapRef, setSoapRef] = useState<string | undefined>();
+  const [soapVerseText, setSoapVerseText] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
+
+  const handleOpenSOAPAssistant = (ref: string, verseText?: string) => {
+    setSoapRef(ref);
+    setSoapVerseText(verseText);
+    setIsSOAPDrawerOpen(true);
+    if (onAttachStudyNote) onAttachStudyNote(ref);
+  };
 
   const currentBook = getBookById(selectedBookId) || CANONICAL_BOOKS[0];
   const currentTranslationMeta =
@@ -110,9 +125,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
-
-    bibleProvider
-      .getChapter(selectedTranslation, selectedBookId, selectedChapterNumber)
+    bibleProvider.getChapter(selectedTranslation, selectedBookId, selectedChapterNumber)
       .then((res) => {
         if (isMounted) {
           setChapter(res);
@@ -121,13 +134,8 @@ export const BibleView: React.FC<BibleViewProps> = ({
           setIsLoading(false);
         }
       })
-      .catch(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+      .catch(() => { if (isMounted) setIsLoading(false); });
+    return () => { isMounted = false; };
   }, [selectedTranslation, selectedBookId, selectedChapterNumber]);
 
   const handleBookChange = (bookId: string) => {
@@ -143,19 +151,12 @@ export const BibleView: React.FC<BibleViewProps> = ({
     setSelectedTranslation(translationId);
     saveLastBiblePosition({ translation: translationId, bookId: selectedBookId, chapterNumber: selectedChapterNumber });
   };
-  const handlePrevChapter = () => {
-    if (selectedChapterNumber > 1) handleChapterChange(selectedChapterNumber - 1);
-  };
-  const handleNextChapter = () => {
-    if (selectedChapterNumber < currentBook.chapterCount) handleChapterChange(selectedChapterNumber + 1);
-  };
+  const handlePrevChapter = () => { if (selectedChapterNumber > 1) handleChapterChange(selectedChapterNumber - 1); };
+  const handleNextChapter = () => { if (selectedChapterNumber < currentBook.chapterCount) handleChapterChange(selectedChapterNumber + 1); };
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
-    if (!q.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    if (!q.trim()) { setSearchResults([]); return; }
     const results = await scriptureSearchService.search(q, selectedTranslation);
     setSearchResults(results);
   };
@@ -171,23 +172,13 @@ export const BibleView: React.FC<BibleViewProps> = ({
   };
 
   const handleToggleBookmark = (v: InteractiveVerse) => {
-    setInteractiveVerses((prev) =>
-      prev.map((item) => (item.verseNumber === v.verseNumber ? { ...item, isBookmarked: !item.isBookmarked } : item))
-    );
-    if (activeVerse) {
-      setActiveVerse((prev) => (prev ? { ...prev, isBookmarked: !prev.isBookmarked } : null));
-    }
+    setInteractiveVerses((prev) => prev.map((item) => (item.verseNumber === v.verseNumber ? { ...item, isBookmarked: !item.isBookmarked } : item)));
+    if (activeVerse) setActiveVerse((prev) => (prev ? { ...prev, isBookmarked: !prev.isBookmarked } : null));
   };
 
   const handleHighlight = (color: 'terracotta' | 'sage' | 'amber' | 'none') => {
     if (!activeVerse) return;
-    setInteractiveVerses((prev) =>
-      prev.map((item) =>
-        item.verseNumber === activeVerse.verseNumber
-          ? { ...item, isHighlighted: color !== 'none', highlightColor: color !== 'none' ? color : undefined }
-          : item
-      )
-    );
+    setInteractiveVerses((prev) => prev.map((item) => item.verseNumber === activeVerse.verseNumber ? { ...item, isHighlighted: color !== 'none', highlightColor: color !== 'none' ? color : undefined } : item));
     setActiveVerse(null);
   };
 
@@ -195,10 +186,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
     if (!activeVerse || !chapter) return;
     navigator.clipboard.writeText(`"${activeVerse.text}" — ${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`);
     setCopiedNotification(true);
-    setTimeout(() => {
-      setCopiedNotification(false);
-      setActiveVerse(null);
-    }, 1200);
+    setTimeout(() => { setCopiedNotification(false); setActiveVerse(null); }, 1200);
   };
 
   return (
@@ -221,6 +209,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
           onTranslationChange={handleTranslationChange}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenPicker={() => setIsPickerOpen(true)}
+          onOpenSOAP={() => handleOpenSOAPAssistant(`${chapter ? chapter.bookName : currentBook.name} ${selectedChapterNumber}`)}
           onFontSizeChange={handleFontSizeChange}
         />
       </div>
@@ -240,7 +229,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
         onSelectVerse={setActiveVerse}
         onPrevChapter={handlePrevChapter}
         onNextChapter={handleNextChapter}
-        onAttachStudyNote={onAttachStudyNote}
+        onAttachStudyNote={handleOpenSOAPAssistant}
       />
 
       {/* 3. Floating Quick Chapter Stepper on Mobile (above bottom nav) */}
@@ -280,7 +269,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
         onSelectResult={handleSelectSearchResult}
       />
 
-      {/* 5. Verse Interaction Modal */}
+      {/* 6. Verse Interaction Modal */}
       <VerseActionModal
         activeVerse={activeVerse}
         chapter={chapter}
@@ -290,7 +279,19 @@ export const BibleView: React.FC<BibleViewProps> = ({
         onToggleBookmark={handleToggleBookmark}
         onCopy={handleCopy}
         onHighlight={handleHighlight}
-        onAttachStudyNote={onAttachStudyNote}
+        onAttachStudyNote={handleOpenSOAPAssistant}
+      />
+
+      {/* 7. In-Context Assisted SOAP Study Companion Drawer */}
+      <AssistedSOAPDrawer
+        isOpen={isSOAPDrawerOpen}
+        onClose={() => setIsSOAPDrawerOpen(false)}
+        bookId={selectedBookId}
+        bookName={chapter ? chapter.bookName : currentBook.name}
+        chapterNumber={selectedChapterNumber}
+        initialVerseRef={soapRef}
+        initialVerseText={soapVerseText}
+        activeUserId={activeUserId}
       />
     </div>
   );

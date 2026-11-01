@@ -10,7 +10,8 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Search, 
-  Type 
+  Type,
+  BookMarked
 } from 'lucide-react';
 import { CANONICAL_BOOKS, SUPPORTED_TRANSLATIONS } from '../../lib/bible/canon';
 
@@ -28,6 +29,7 @@ interface BibleToolbarProps {
   onTranslationChange: (translationId: string) => void;
   onOpenSearch: () => void;
   onOpenPicker?: () => void;
+  onOpenSOAP?: () => void;
   onFontSizeChange: (updater: (prev: number) => number) => void;
 }
 
@@ -45,6 +47,7 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
   onTranslationChange,
   onOpenSearch,
   onOpenPicker,
+  onOpenSOAP,
   onFontSizeChange,
 }) => {
   return (
@@ -157,6 +160,19 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
             ⌘K
           </kbd>
         </button>
+
+        {/* Assisted SOAP Study Trigger */}
+        {onOpenSOAP && (
+          <button
+            onClick={onOpenSOAP}
+            className="p-2 sm:px-2.5 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle text-charis-primary transition-colors flex items-center gap-1.5 text-xs shadow-subtle shrink-0"
+            title="Open Assisted SOAP Study Companion"
+            aria-label="Open Assisted SOAP Study"
+          >
+            <BookMarked className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline font-medium">SOAP</span>
+          </button>
+        )}
       </div>
 
       {/* Font Size Adjuster */}
