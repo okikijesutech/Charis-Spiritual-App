@@ -15,6 +15,7 @@ import { AccountSection } from '../settings/AccountSection';
 import { NotificationPreferencesSection } from '../settings/NotificationPreferencesSection';
 import { OfflineTranslationsSection } from '../settings/OfflineTranslationsSection';
 import { DataPrivacySection } from '../settings/DataPrivacySection';
+import { PWAAppSection } from '../settings/PWAAppSection';
 import { PrivacyPolicyModal } from './PrivacyPolicyModal';
 import { LicencesModal } from './LicencesModal';
 import { SupportModal } from './SupportModal';
@@ -84,7 +85,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* 3. Notifications & Quiet Hours */}
+          {/* 3. PWA Installation & Updates */}
+          <div className="pt-4 border-t border-charis-border/60">
+            <PWAAppSection />
+          </div>
+
+          {/* 4. Notifications & Quiet Hours */}
           <div className="pt-4 border-t border-charis-border/60">
             <NotificationPreferencesSection
               preferences={reminderPreferences}
