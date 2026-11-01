@@ -6,6 +6,7 @@ import { FeaturedReadingSection } from '../components/home/FeaturedReadingSectio
 import { FastingTimerWidget } from '../components/home/FastingTimerWidget';
 import { VerseReflectionWidget } from '../components/home/VerseReflectionWidget';
 import { QuickActionsSection } from '../components/home/QuickActionsSection';
+import { SanctuaryCompassHero } from '../components/home/SanctuaryCompassHero';
 import { DashboardCustomizerModal } from '../components/dashboard/DashboardCustomizerModal';
 import { useUserSettings } from '../hooks/useUserSettings';
 import { useAuth } from '../context/AuthContext';
@@ -16,11 +17,13 @@ import { activityRepository } from '../lib/db/activity-repository';
 interface HomeViewProps {
   onNavigate: (tab: NavDestination) => void;
   onOpenQuickAction: () => void;
+  onOpenEthos: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
   onOpenQuickAction,
+  onOpenEthos,
 }) => {
   const { profile, user } = useAuth();
   const activeUserId = user?.id || 'demo-user-id';
@@ -124,8 +127,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {todayReflectionCount === null
               ? 'Checking rhythm...'
               : todayReflectionCount === 0
-              ? 'No reflections logged today'
-              : `${todayReflectionCount} ${todayReflectionCount === 1 ? 'reflection' : 'reflections'} logged today`}
+              ? 'Rhythm in grace · Present today'
+              : `${todayReflectionCount} ${todayReflectionCount === 1 ? 'reflection' : 'reflections'} today`}
           </Badge>
 
           <button
@@ -139,7 +142,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* 2. Dynamically Ordered Dashboard Cards */}
+      {/* 2. Sanctuary Daily Compass & Grace Ethos Hero */}
+      <SanctuaryCompassHero
+        onNavigate={onNavigate}
+        onOpenEthos={onOpenEthos}
+      />
+
+      {/* 3. Dynamically Ordered Dashboard Cards */}
       <div className="space-y-6">
         {visibleWidgets.map((widget) => renderWidget(widget.id))}
       </div>

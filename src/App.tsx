@@ -11,6 +11,7 @@ import { PlansView } from './views/PlansView'
 import { SettingsModal } from './components/modals/SettingsModal'
 import { QuickActionModal } from './components/modals/QuickActionModal'
 import { AuthModal } from './components/modals/AuthModal'
+import { EthosModal } from './components/modals/EthosModal'
 import { ReminderAlertBanner } from './components/notifications/ReminderAlertBanner'
 import { NavDestination } from './types'
 import type { ActivityLog } from './types/activity'
@@ -33,6 +34,7 @@ export const AppContent: React.FC = () => {
   const [isOffline, setIsOffline] = useState<boolean>(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false)
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false)
+  const [isEthosOpen, setIsEthosOpen] = useState<boolean>(false)
   const [isQuickActionOpen, setIsQuickActionOpen] = useState<boolean>(false)
   const [isReaderChromeVisible, setIsReaderChromeVisible] = useState<boolean>(true)
   
@@ -72,6 +74,7 @@ export const AppContent: React.FC = () => {
       onOpenSettings={() => setIsSettingsOpen(true)}
       onOpenAuth={() => setIsAuthOpen(true)}
       onQuickAction={() => setIsQuickActionOpen(true)}
+      onOpenEthos={() => setIsEthosOpen(true)}
       isReaderChromeVisible={currentTab === 'bible' ? isReaderChromeVisible : true}
       onSetReaderChromeVisible={setIsReaderChromeVisible}
     >
@@ -80,6 +83,7 @@ export const AppContent: React.FC = () => {
           <HomeView
             onNavigate={handleSelectTab}
             onOpenQuickAction={() => setIsQuickActionOpen(true)}
+            onOpenEthos={() => setIsEthosOpen(true)}
           />
         )}
 
@@ -118,6 +122,12 @@ export const AppContent: React.FC = () => {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
+      {/* The Charis Ethos Modal */}
+      <EthosModal
+        isOpen={isEthosOpen}
+        onClose={() => setIsEthosOpen(false)}
       />
 
       {/* Quick Action Activity Modal */}

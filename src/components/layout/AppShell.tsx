@@ -12,6 +12,7 @@ interface AppShellProps {
   onOpenSettings: () => void
   onOpenAuth: () => void
   onQuickAction: () => void
+  onOpenEthos?: () => void
   isReaderChromeVisible?: boolean
   onSetReaderChromeVisible?: (visible: boolean) => void
   children: React.ReactNode
@@ -25,6 +26,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   onOpenSettings,
   onOpenAuth,
   onQuickAction,
+  onOpenEthos,
   isReaderChromeVisible = true,
   onSetReaderChromeVisible,
   children
@@ -70,6 +72,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onSelectTab={onSelectTab}
         onQuickAction={onQuickAction}
         onOpenAuth={onOpenAuth}
+        onOpenEthos={onOpenEthos}
       />
 
       {/* Main App Flex Column */}

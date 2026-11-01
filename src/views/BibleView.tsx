@@ -222,6 +222,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
         onSelectVerse={setActiveVerse}
         onPrevChapter={handlePrevChapter}
         onNextChapter={handleNextChapter}
+        onAttachStudyNote={onAttachStudyNote}
       />
 
       {/* 3. Floating Quick Chapter Stepper on Mobile (above bottom nav) */}

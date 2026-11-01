@@ -36,6 +36,14 @@ export const Header: React.FC<HeaderProps> = ({
 
   const effectiveOffline = isOffline || !networkOnline
 
+  const tabTitles: Record<NavDestination, string> = {
+    home: 'Sanctuary',
+    bible: 'Scripture',
+    prayer: 'Prayer Stillness',
+    study: 'SOAP Study',
+    plans: 'Paced Journeys',
+  }
+
   return (
     <header className="sticky top-0 shrink-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-b border-charis-border/60 transition-colors pt-safe">
       <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-15 flex items-center justify-between">
@@ -50,11 +58,11 @@ export const Header: React.FC<HeaderProps> = ({
             <CharisLogo variant="wordmark" size="md" />
           </button>
 
-          {currentTab && currentTab !== 'home' && (
+          {currentTab && (
             <div className="flex items-center gap-1.5 select-none animate-view-transition">
               <span className="text-charis-border-subtle font-serif text-sm">/</span>
-              <span className="font-serif italic text-xs sm:text-sm text-charis-text-muted capitalize">
-                {currentTab}
+              <span className="font-serif italic text-xs sm:text-sm text-charis-text-muted">
+                {tabTitles[currentTab] || currentTab}
               </span>
             </div>
           )}

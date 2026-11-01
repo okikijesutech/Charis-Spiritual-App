@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import { Bookmark, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { Bookmark, ChevronLeft, ChevronRight, Loader2, BookMarked, Sparkles } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import type { BibleChapter, CanonicalBook, BibleTranslationMeta } from '../../types/bible'
 import type { InteractiveVerse } from './VerseActionModal'
@@ -25,6 +25,7 @@ interface ScriptureReadingSurfaceProps {
   onSelectVerse: (verse: InteractiveVerse) => void
   onPrevChapter: () => void
   onNextChapter: () => void
+  onAttachStudyNote?: (verseRef: string) => void
 }
 
 export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = ({
@@ -41,6 +42,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
   onSelectVerse,
   onPrevChapter,
   onNextChapter,
+  onAttachStudyNote,
 }) => {
   return (
     <article
@@ -122,6 +124,31 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
             )
           })}
         </div>
+
+        {/* Contemplative Formation Bridge: Turn Reading into SOAP Study */}
+        {onAttachStudyNote && (
+          <div className="mt-8 p-4 rounded-xl bg-charis-border-subtle/50 border border-charis-border/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-center sm:text-left">
+              <p className="text-xs font-serif font-bold text-charis-text flex items-center justify-center sm:justify-start gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-charis-primary" />
+                <span>Let the Word take root in quietness</span>
+              </p>
+              <p className="text-[11px] text-charis-text-muted mt-0.5">
+                Deepen this passage through inductive SOAP reflection (Scripture, Observation, Application, Prayer).
+              </p>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onAttachStudyNote(`${chapter ? chapter.bookName : currentBook.name} ${selectedChapterNumber}`)
+              }}
+              className="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg bg-charis-surface border border-charis-border text-charis-text hover:text-charis-primary hover:border-charis-primary/40 transition-colors shadow-subtle flex items-center gap-1.5"
+            >
+              <BookMarked className="w-3.5 h-3.5 text-charis-primary" />
+              <span>Begin SOAP Study</span>
+            </button>
+          </div>
+        )}
 
         {/* Chapter Bottom Stepper */}
         <div className="mt-10 pt-6 border-t border-charis-border/60 flex items-center justify-between">

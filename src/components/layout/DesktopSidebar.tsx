@@ -9,24 +9,26 @@ interface DesktopSidebarProps {
   onSelectTab: (tab: NavDestination) => void
   onQuickAction: () => void
   onOpenAuth: () => void
+  onOpenEthos?: () => void
 }
 
 export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   currentTab,
   onSelectTab,
   onQuickAction,
-  onOpenAuth
+  onOpenAuth,
+  onOpenEthos
 }) => {
   const { user, profile } = useAuth()
   const userDisplayName = user ? (profile?.display_name || user?.user_metadata?.full_name || user.email?.split('@')[0] || 'My Account') : null
   const displayName = userDisplayName || 'Guest Pilgrim'
 
   const navItems: { id: NavDestination; label: string; icon: React.FC<{ className?: string }>; description: string }[] = [
-    { id: 'home', label: 'Home', icon: Home, description: 'Daily rhythm & overview' },
-    { id: 'bible', label: 'Bible Reader', icon: BookOpen, description: 'Scripture & annotations' },
-    { id: 'prayer', label: 'Prayer Journal', icon: Heart, description: 'Private reflections & petitions' },
-    { id: 'study', label: 'Study Journal', icon: BookMarked, description: 'Inductive study & SOAP' },
-    { id: 'plans', label: 'Reading Plans', icon: Calendar, description: 'Structured schedules' }
+    { id: 'home', label: 'Sanctuary', icon: Home, description: 'Daily rhythm & compass' },
+    { id: 'bible', label: 'Scripture', icon: BookOpen, description: 'Unhurried Word & audio' },
+    { id: 'prayer', label: 'Prayer Stillness', icon: Heart, description: 'Chimes, petitions & rest' },
+    { id: 'study', label: 'SOAP Study', icon: BookMarked, description: 'Inductive Scripture reflection' },
+    { id: 'plans', label: 'Paced Journeys', icon: Calendar, description: 'Guilt-free reading schedules' }
   ]
 
   return (
@@ -117,14 +119,22 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       </div>
 
       {/* Footer / Grace note */}
-      <div className="p-4 m-3 mt-0 rounded-2xl bg-charis-border-subtle/70 border border-charis-border/60">
-        <div className="flex items-center gap-2 text-xs font-semibold text-charis-primary">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Grace over streaks</span>
-        </div>
-        <p className="text-[11px] text-charis-text-muted mt-1.5 leading-relaxed">
-          Spiritual rhythm is an invitation to fellowship, not a score to maintain.
-        </p>
+      <div className="p-3.5 m-3 mt-0 rounded-2xl bg-charis-border-subtle/70 border border-charis-border/60">
+        <button
+          onClick={onOpenEthos}
+          className="w-full text-left group transition-opacity hover:opacity-90 focus:outline-none"
+        >
+          <div className="flex items-center justify-between text-xs font-semibold text-charis-primary">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Grace over streaks</span>
+            </span>
+            <span className="text-[10px] underline opacity-80 group-hover:opacity-100">Ethos</span>
+          </div>
+          <p className="text-[11px] text-charis-text-muted mt-1.5 leading-relaxed">
+            Spiritual rhythm is an invitation to fellowship, not a score to maintain.
+          </p>
+        </button>
       </div>
     </aside>
   )

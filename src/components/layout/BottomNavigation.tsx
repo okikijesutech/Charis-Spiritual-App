@@ -12,11 +12,11 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   onSelectTab
 }) => {
   const tabs: { id: NavDestination; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'bible', label: 'Bible', icon: BookOpen },
+    { id: 'home', label: 'Sanctuary', icon: Home },
+    { id: 'bible', label: 'Scripture', icon: BookOpen },
     { id: 'prayer', label: 'Prayer', icon: Heart },
-    { id: 'study', label: 'Study', icon: BookMarked },
-    { id: 'plans', label: 'Plans', icon: Calendar }
+    { id: 'study', label: 'SOAP', icon: BookMarked },
+    { id: 'plans', label: 'Journeys', icon: Calendar }
   ]
 
   return (
