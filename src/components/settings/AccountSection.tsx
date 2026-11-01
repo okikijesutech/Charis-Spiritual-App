@@ -56,7 +56,7 @@ export const AccountSection: React.FC = () => {
   };
 
   return (
-    <div className="p-4 rounded-xl border border-charis-border bg-charis-border-subtle/40">
+    <div className="p-3.5 sm:p-4 rounded-xl border border-charis-border bg-charis-border-subtle/40 overflow-hidden">
       {showAuthForm && !user ? (
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -73,31 +73,31 @@ export const AccountSection: React.FC = () => {
           <AuthForm onSuccess={() => setShowAuthForm(false)} />
         </div>
       ) : (
-        <div>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-charis-primary/10 text-charis-primary border border-charis-primary/20 flex items-center justify-center font-serif font-bold text-base">
+        <div className="min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-xl bg-charis-primary/10 text-charis-primary border border-charis-primary/20 flex items-center justify-center font-serif font-bold text-base shrink-0">
                 {displayName.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <span className="text-xs font-semibold text-charis-text-muted uppercase tracking-wider block">
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-semibold text-charis-text-muted uppercase tracking-wider block">
                   Account
                 </span>
-                <h3 className="font-serif font-bold text-base text-charis-text mt-0.5">
+                <h3 className="font-serif font-bold text-sm sm:text-base text-charis-text truncate">
                   {displayName}
                 </h3>
-                <p className="text-xs text-charis-text-muted">{displayEmail}</p>
+                <p className="text-xs text-charis-text-muted truncate">{displayEmail}</p>
               </div>
             </div>
 
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-start gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-charis-border/50">
               <Badge variant="sage" size="sm" className="gap-1">
                 <UserCheck className="w-3 h-3" />
                 <span>{isConfigured ? 'Supabase Sync' : 'Demo Session'}</span>
               </Badge>
               <button
                 onClick={handleSignOutClick}
-                className="text-xs text-charis-text-muted hover:text-rose-600 flex items-center gap-1 transition-colors mt-1"
+                className="text-xs text-charis-text-muted hover:text-rose-600 flex items-center gap-1 transition-colors"
                 title="Sign out of your session. Local drafts remain on this device unless cleared."
               >
                 <LogOut className="w-3 h-3" />

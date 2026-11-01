@@ -19,17 +19,17 @@ export const PWAAppSection: React.FC = () => {
   } = usePWAInstall();
 
   return (
-    <div className="p-3.5 rounded-xl border border-charis-border bg-charis-surface space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-charis-primary/10 text-charis-primary">
+    <div className="p-3.5 rounded-xl border border-charis-border bg-charis-surface space-y-3 overflow-hidden">
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="p-1.5 rounded-lg bg-charis-primary/10 text-charis-primary shrink-0">
             <Smartphone className="w-4 h-4" />
           </div>
-          <div>
-            <span className="text-xs font-semibold text-charis-text block">
+          <div className="min-w-0 flex-1">
+            <span className="text-xs font-semibold text-charis-text block truncate">
               Application & Updates
             </span>
-            <span className="text-[11px] text-charis-text-muted block">
+            <span className="text-[11px] text-charis-text-muted block truncate">
               {isInstalled
                 ? 'Installed as standalone Progressive Web App'
                 : 'Install Charis on your device for instant offline access'}
@@ -38,7 +38,7 @@ export const PWAAppSection: React.FC = () => {
         </div>
 
         {isInstalled && (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
             <CheckCircle2 className="w-3 h-3" />
             <span>Installed</span>
           </span>
@@ -46,8 +46,8 @@ export const PWAAppSection: React.FC = () => {
       </div>
 
       {isInstalled ? (
-        <div className="pt-2 border-t border-charis-border/50 flex items-center justify-between gap-3 text-xs">
-          <span className="text-[11px] text-charis-text-muted">
+        <div className="pt-2 border-t border-charis-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <span className="text-[11px] text-charis-text-muted flex-1 min-w-0 leading-tight">
             {updateStatus || 'Automatic updates active via Service Worker'}
           </span>
 
@@ -55,7 +55,7 @@ export const PWAAppSection: React.FC = () => {
             type="button"
             onClick={checkForUpdate}
             disabled={isCheckingUpdate}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-charis-border-subtle hover:bg-charis-border text-charis-text text-xs font-medium transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-charis-border-subtle hover:bg-charis-border text-charis-text text-xs font-medium transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-charis-primary ${isCheckingUpdate ? 'animate-spin' : ''}`} />
             <span>{isCheckingUpdate ? 'Checking...' : 'Check for Updates'}</span>

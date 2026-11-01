@@ -1,18 +1,14 @@
+/**
+ * Refined Editorial Header (Option A: Unified Account & Quiet Sync)
+ * Features calm editorial typography, quiet-by-default sync telemetry,
+ * and unified Account / Appearance / Settings navigation.
+ */
+
 import React from 'react'
-import { 
-  Sun, 
-  Moon, 
-  Laptop, 
-  Wifi, 
-  WifiOff, 
-  Settings, 
-  RefreshCw, 
-  User 
-} from 'lucide-react'
-import { useTheme } from '../../context/ThemeContext'
+import { WifiOff, RefreshCw, User, CheckCircle2 } from 'lucide-react'
 import { useSync } from '../../context/SyncContext'
 import { useAuth } from '../../context/AuthContext'
-import { ThemePreference, NavDestination } from '../../types'
+import { NavDestination } from '../../types'
 import { CharisLogo } from '../brand/CharisLogo'
 
 interface HeaderProps {
@@ -29,141 +25,107 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTab,
   isOffline,
   onToggleOffline,
-  onOpenSettings,
   onOpenAuth
 }) => {
-  const { theme, setTheme } = useTheme()
   const { user, profile } = useAuth()
   const { isOnline: networkOnline, isSyncing, statusText, triggerSync, pendingCount } = useSync()
 
-  const userDisplayName = user ? (profile?.display_name || user?.user_metadata?.full_name || user.email?.split('@')[0] || 'Account') : null;
+  const userDisplayName = user
+    ? profile?.display_name || user?.user_metadata?.full_name || user.email?.split('@')[0] || 'Account'
+    : null
 
   const effectiveOffline = isOffline || !networkOnline
 
-  const cycleTheme = () => {
-    const sequence: ThemePreference[] = ['light', 'dark', 'system']
-    const nextIdx = (sequence.indexOf(theme) + 1) % sequence.length
-    setTheme(sequence[nextIdx])
-  }
-
-  const themeIcon = () => {
-    if (theme === 'light') return <Sun className="w-4 h-4 text-amber-600" />
-    if (theme === 'dark') return <Moon className="w-4 h-4 text-indigo-400" />
-    return <Laptop className="w-4 h-4 text-charis-text-muted" />
-  }
-
   return (
-    <header className="sticky top-0 shrink-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-b border-charis-border/70 transition-colors pt-safe">
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between">
-        {/* Brand title & return to Home */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+    <header className="sticky top-0 shrink-0 z-30 w-full bg-charis-surface/90 backdrop-blur-md border-b border-charis-border/60 transition-colors pt-safe">
+      <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-15 flex items-center justify-between">
+        {/* Brand title & Editorial Subtitle */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => onSelectTab && onSelectTab('home')}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary rounded-xl p-0.5"
+            className="flex items-center hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary rounded-xl p-0.5"
             title="Return to Home"
             aria-label="Return to Home"
           >
             <CharisLogo variant="wordmark" size="md" />
           </button>
+
           {currentTab && currentTab !== 'home' && (
-            <span className="md:hidden text-[10px] sm:text-[11px] font-sans font-medium text-charis-primary bg-charis-primary/10 px-2 py-0.5 rounded-full capitalize">
-              {currentTab}
-            </span>
+            <div className="flex items-center gap-1.5 select-none animate-view-transition">
+              <span className="text-charis-border-subtle font-serif text-sm">/</span>
+              <span className="font-serif italic text-xs sm:text-sm text-charis-text-muted capitalize">
+                {currentTab}
+              </span>
+            </div>
           )}
         </div>
 
-        {/* Header Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Offline/Sync state pill */}
+        {/* Quiet & Unified Right Controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Quiet-by-Default Sync Indicator */}
+          {effectiveOffline ? (
+            <button
+              onClick={onToggleOffline}
+              title="Offline mode. All records saved securely on device. Tap to reconnect."
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 transition-all cursor-pointer"
+            >
+              <WifiOff className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-[11px]">Offline</span>
+            </button>
+          ) : isSyncing ? (
+            <div
+              title="Syncing records with cloud..."
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-sky-600 dark:text-sky-400"
+            >
+              <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0" />
+              <span className="text-[11px] hidden sm:inline">Syncing</span>
+            </div>
+          ) : pendingCount > 0 ? (
+            <button
+              onClick={triggerSync}
+              title={`${pendingCount} item(s) pending sync. Click to upload.`}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium text-sky-600 hover:bg-sky-500/10 transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>{pendingCount}</span>
+            </button>
+          ) : (
+            <button
+              onClick={triggerSync}
+              title={`Cloud Synced (${statusText}). Click to refresh.`}
+              className="p-1.5 rounded-full text-emerald-600/70 hover:text-emerald-700 dark:text-emerald-400/70 hover:bg-emerald-500/10 transition-colors"
+              aria-label="Cloud sync status: Active"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Unified Account & Settings Pill (Option A) */}
           <button
-            onClick={() => {
-              if (effectiveOffline) {
-                onToggleOffline()
-              } else {
-                triggerSync()
-              }
-            }}
-            title={
-              effectiveOffline
-                ? "Offline mode. All records are saved securely on this device."
-                : isSyncing
-                ? "Syncing records with cloud..."
-                : `Online. ${statusText}. Click to sync.`
-            }
-            className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
-              effectiveOffline
-                ? 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400'
-                : isSyncing
-                ? 'bg-sky-500/10 border-sky-500/30 text-sky-700 dark:text-sky-400'
-                : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-400'
+            onClick={onOpenAuth}
+            className={`inline-flex items-center gap-2 p-1 pr-2.5 rounded-full border transition-all shadow-subtle cursor-pointer ${
+              user && userDisplayName
+                ? 'border-charis-border hover:border-charis-primary/40 bg-charis-surface hover:bg-charis-border-subtle'
+                : 'border-charis-primary/30 bg-charis-primary/5 hover:bg-charis-primary/10 text-charis-primary px-3 py-1.5'
             }`}
+            title={user && userDisplayName ? `Account & Settings: ${userDisplayName}` : 'Sign In or Create Account'}
+            aria-label={user && userDisplayName ? `Account & Settings: ${userDisplayName}` : 'Sign In'}
           >
-            {effectiveOffline ? (
+            {user && userDisplayName ? (
               <>
-                <WifiOff className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span className="text-[11px] sm:text-xs font-medium">Offline</span>
-                <span className="text-[10px] opacity-75 hidden sm:inline">(Saved locally)</span>
-              </>
-            ) : isSyncing ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 animate-spin shrink-0" />
-                <span className="text-[11px] sm:text-xs font-medium">Syncing</span>
-                {pendingCount > 0 && (
-                  <span className="text-[10px] opacity-75 hidden sm:inline">({pendingCount})</span>
-                )}
+                <div className="w-6 h-6 rounded-full bg-charis-primary/15 text-charis-primary border border-charis-primary/20 flex items-center justify-center font-serif font-bold text-xs shrink-0">
+                  {userDisplayName.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-xs font-medium text-charis-text truncate max-w-[90px]">
+                  {userDisplayName.split(' ')[0]}
+                </span>
               </>
             ) : (
               <>
-                <Wifi className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span className="text-[11px] sm:text-xs font-medium">Online</span>
-                <span className="text-[10px] opacity-75 hidden sm:inline">
-                  ({pendingCount > 0 ? `Sync pending (${pendingCount})` : statusText})
-                </span>
+                <User className="w-3.5 h-3.5 text-charis-primary" />
+                <span className="text-xs font-medium text-charis-primary">Sign In</span>
               </>
             )}
-          </button>
-
-          {/* Theme switcher */}
-          <button
-            onClick={cycleTheme}
-            className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text flex items-center justify-center min-w-[36px] min-h-[36px]"
-            title={`Current theme: ${theme}. Click to switch.`}
-            aria-label={`Toggle theme: currently ${theme}`}
-          >
-            {themeIcon()}
-          </button>
-
-          {/* Settings button */}
-          <button
-            onClick={onOpenSettings}
-            className="p-2 rounded-xl border border-charis-border bg-charis-surface hover:bg-charis-border-subtle transition-colors text-charis-text min-w-[36px] min-h-[36px] flex items-center justify-center"
-            title="Settings & Preferences"
-            aria-label="Settings and Preferences"
-          >
-            <Settings className="w-4 h-4 text-charis-text-muted hover:text-charis-text" />
-          </button>
-
-          {/* Direct Account / Sign-In Quick Trigger */}
-          <button
-            onClick={onOpenAuth}
-            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all text-charis-text min-w-[36px] min-h-[36px] flex items-center gap-1.5 shadow-subtle cursor-pointer ${
-              user
-                ? 'border-charis-primary/40 bg-charis-primary/10 hover:bg-charis-primary/15'
-                : 'border-charis-border bg-charis-surface hover:bg-charis-border-subtle'
-            }`}
-            title={user ? `Signed in as ${userDisplayName} — View Account` : "Sign In or Create Account"}
-            aria-label={user ? `Account: ${userDisplayName}` : "Sign In or Create Account"}
-          >
-            <div className="w-5 h-5 rounded-lg bg-charis-primary/15 text-charis-primary flex items-center justify-center font-serif font-bold text-xs shrink-0">
-              {user && userDisplayName ? (
-                userDisplayName.charAt(0).toUpperCase()
-              ) : (
-                <User className="w-3.5 h-3.5 text-charis-text-muted" />
-              )}
-            </div>
-            <span className="hidden sm:inline text-xs font-medium text-charis-primary truncate max-w-[85px]">
-              {user && userDisplayName ? userDisplayName.split(' ')[0] : 'Sign In'}
-            </span>
           </button>
         </div>
       </div>

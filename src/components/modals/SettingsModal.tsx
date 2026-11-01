@@ -58,7 +58,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="text-xs font-semibold uppercase tracking-wider text-charis-text-muted block mb-2">
               Appearance & Theme
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {[
                 { id: 'light', label: 'Light', icon: Sun },
                 { id: 'dark', label: 'Dark', icon: Moon },
@@ -71,7 +71,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     key={t.id}
                     onClick={() => setTheme(t.id as ThemePreference)}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
+                    className={`flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border transition-all ${
                       isSelected
                         ? 'bg-charis-surface border-charis-primary text-charis-primary shadow-subtle'
                         : 'bg-charis-border-subtle/50 border-charis-border text-charis-text-muted hover:text-charis-text'

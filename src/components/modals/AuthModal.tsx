@@ -6,11 +6,13 @@
  */
 
 import React, { useState } from 'react';
-import { UserCheck, LogOut, ShieldCheck, Mail, AlertTriangle } from 'lucide-react';
+import { UserCheck, LogOut, ShieldCheck, Mail, AlertTriangle, Sun, Moon, Laptop } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { AuthForm } from '../auth/AuthForm';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { ThemePreference } from '../../types';
 import { prayerRepository } from '../../lib/db/prayer-repository';
 import { studyRepository } from '../../lib/db/study-repository';
 import { activityRepository } from '../../lib/db/activity-repository';
@@ -25,6 +27,7 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onOpenSettings }) => {
   const { user, profile, isConfigured, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [unsyncedWarning, setUnsyncedWarning] = useState<number | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -97,6 +100,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onOpenSet
               <UserCheck className="w-3 h-3" />
               <span>{isConfigured ? 'Cloud Sync' : 'Local'}</span>
             </Badge>
+          </div>
+
+          {/* Quick Theme Switcher & Settings Shortcut */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-charis-surface border border-charis-border/80">
+            <span className="text-xs text-charis-text-muted font-medium">Appearance</span>
+            <div className="flex items-center gap-1 bg-charis-border-subtle/60 p-0.5 rounded-lg border border-charis-border/50">
+              {[
+                { id: 'light', icon: Sun, label: 'Light' },
+                { id: 'dark', icon: Moon, label: 'Dark' },
+                { id: 'system', icon: Laptop, label: 'System' },
+              ].map(({ id, icon: Icon, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setTheme(id as ThemePreference)}
+                  className={`p-1.5 rounded-md text-xs transition-all ${
+                    theme === id
+                      ? 'bg-charis-surface text-charis-primary shadow-subtle'
+                      : 'text-charis-text-muted hover:text-charis-text'
+                  }`}
+                  title={label}
+                  aria-label={label}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Security & Sync Info Note */}

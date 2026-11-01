@@ -67,7 +67,7 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto">
+        <div className="p-3.5 sm:p-6 overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </div>
