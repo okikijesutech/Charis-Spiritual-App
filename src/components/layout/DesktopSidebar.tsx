@@ -2,7 +2,6 @@ import React from 'react'
 import { Home, BookOpen, Heart, BookMarked, Calendar, PlusCircle, Sparkles, User, UserCheck } from 'lucide-react'
 import { NavDestination } from '../../types'
 import { useAuth } from '../../context/AuthContext'
-import { mockUserProfile } from '../../data/mockData'
 import { CharisLogo } from '../brand/CharisLogo'
 
 interface DesktopSidebarProps {
@@ -19,7 +18,8 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
   onOpenAuth
 }) => {
   const { user, profile } = useAuth()
-  const displayName = profile?.display_name || user?.user_metadata?.full_name || (user ? user.email?.split('@')[0] : mockUserProfile.name)
+  const userDisplayName = user ? (profile?.display_name || user?.user_metadata?.full_name || user.email?.split('@')[0] || 'My Account') : null
+  const displayName = userDisplayName || 'Guest Pilgrim'
 
   const navItems: { id: NavDestination; label: string; icon: React.FC<{ className?: string }>; description: string }[] = [
     { id: 'home', label: 'Home', icon: Home, description: 'Daily rhythm & overview' },
@@ -96,7 +96,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
           title={user ? `Signed in as ${user.email}` : "Sign In or Create Account"}
         >
           <div className="w-8 h-8 rounded-lg bg-charis-primary/10 text-charis-primary flex items-center justify-center font-serif font-bold text-sm shrink-0">
-            {displayName ? displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+            {user && userDisplayName ? userDisplayName.charAt(0).toUpperCase() : <User className="w-4 h-4 text-charis-text-muted" />}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-semibold text-charis-text truncate">

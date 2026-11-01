@@ -12,7 +12,6 @@ import {
 import { useTheme } from '../../context/ThemeContext'
 import { useSync } from '../../context/SyncContext'
 import { useAuth } from '../../context/AuthContext'
-import { mockUserProfile } from '../../data/mockData'
 import { ThemePreference, NavDestination } from '../../types'
 import { CharisLogo } from '../brand/CharisLogo'
 
@@ -37,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, profile } = useAuth()
   const { isOnline: networkOnline, isSyncing, statusText, triggerSync, pendingCount } = useSync()
 
-  const displayName = profile?.display_name || user?.user_metadata?.full_name || (user ? user.email?.split('@')[0] : mockUserProfile.name)
+  const userDisplayName = user ? (profile?.display_name || user?.user_metadata?.full_name || user.email?.split('@')[0] || 'Account') : null;
 
   const effectiveOffline = isOffline || !networkOnline
 
@@ -147,15 +146,23 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Direct Account / Sign-In Quick Trigger */}
           <button
             onClick={onOpenAuth}
-            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border border-charis-primary/30 bg-charis-primary/5 hover:bg-charis-primary/10 transition-colors text-charis-text min-w-[36px] min-h-[36px] flex items-center gap-1.5 shadow-subtle"
-            title={user ? `Signed in: ${displayName}` : "Sign In or Create Account"}
-            aria-label={user ? "Manage Account" : "Sign In or Create Account"}
+            className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all text-charis-text min-w-[36px] min-h-[36px] flex items-center gap-1.5 shadow-subtle cursor-pointer ${
+              user
+                ? 'border-charis-primary/40 bg-charis-primary/10 hover:bg-charis-primary/15'
+                : 'border-charis-border bg-charis-surface hover:bg-charis-border-subtle'
+            }`}
+            title={user ? `Signed in as ${userDisplayName} — View Account` : "Sign In or Create Account"}
+            aria-label={user ? `Account: ${userDisplayName}` : "Sign In or Create Account"}
           >
             <div className="w-5 h-5 rounded-lg bg-charis-primary/15 text-charis-primary flex items-center justify-center font-serif font-bold text-xs shrink-0">
-              {displayName ? displayName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+              {user && userDisplayName ? (
+                userDisplayName.charAt(0).toUpperCase()
+              ) : (
+                <User className="w-3.5 h-3.5 text-charis-text-muted" />
+              )}
             </div>
             <span className="hidden sm:inline text-xs font-medium text-charis-primary truncate max-w-[85px]">
-              {user ? displayName.split(' ')[0] : 'Sign In'}
+              {user && userDisplayName ? userDisplayName.split(' ')[0] : 'Sign In'}
             </span>
           </button>
         </div>
