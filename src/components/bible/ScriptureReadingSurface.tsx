@@ -51,7 +51,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
           onToggleChrome()
         }
       }}
-      className="max-w-3xl mx-auto rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 shadow-card relative select-text cursor-default transition-colors"
+      className="max-w-3xl mx-auto rounded-2xl bg-charis-surface border border-charis-border p-6 sm:p-10 pb-28 sm:pb-12 shadow-card relative select-text cursor-default transition-colors"
     >
       {isLoading && (
         <div className="absolute inset-0 bg-charis-surface/60 backdrop-blur-[2px] flex items-center justify-center rounded-2xl z-20">

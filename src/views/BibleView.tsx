@@ -27,7 +27,25 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const [selectedTranslation, setSelectedTranslation] = useState<string>(initialPos.translation);
   const [selectedBookId, setSelectedBookId] = useState<string>(initialPos.bookId);
   const [selectedChapterNumber, setSelectedChapterNumber] = useState<number>(initialPos.chapterNumber);
-  const [fontSize, setFontSize] = useState<number>(18);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('charis_reader_font_size');
+      return saved ? Math.min(26, Math.max(15, Number(saved))) : 18;
+    } catch {
+      return 18;
+    }
+  });
+
+  const handleFontSizeChange = (updater: (prev: number) => number) => {
+    setFontSize((prev) => {
+      const next = updater(prev);
+      try {
+        localStorage.setItem('charis_reader_font_size', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
   const [chapter, setChapter] = useState<BibleChapter | null>(null);
   const [interactiveVerses, setInteractiveVerses] = useState<InteractiveVerse[]>([]);
   const [activeVerse, setActiveVerse] = useState<InteractiveVerse | null>(null);
@@ -41,40 +59,53 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
 
-  // Desktop search shortcut (Cmd+K / Ctrl+K)
+  const currentBook = getBookById(selectedBookId) || CANONICAL_BOOKS[0];
+  const currentTranslationMeta =
+    SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0];
+
+  // Desktop keyboard shortcuts (ArrowLeft/Right for chapters, Cmd+K / Ctrl+K for search)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement?.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (isSearchOpen || isPickerOpen || Boolean(activeVerse)) return;
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen((prev) => !prev);
+      } else if (e.key === 'ArrowLeft' && selectedChapterNumber > 1) {
+        e.preventDefault();
+        handleChapterChange(selectedChapterNumber - 1);
+      } else if (e.key === 'ArrowRight' && selectedChapterNumber < currentBook.chapterCount) {
+        e.preventDefault();
+        handleChapterChange(selectedChapterNumber + 1);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isSearchOpen, isPickerOpen, activeVerse, selectedChapterNumber, currentBook.chapterCount]);
 
-  // Smooth scroll and focus target verse
+  // Scroll to top on chapter change (unless deep-linking to target verse)
   useEffect(() => {
-    if (!targetVerseNumber || !chapter) return;
-    const timeoutId = setTimeout(() => {
-      const el = document.getElementById(`verse-${targetVerseNumber}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
-    return () => clearTimeout(timeoutId);
-  }, [chapter, targetVerseNumber]);
-
-  useEffect(() => {
-    if (targetVerseNumber) {
-      const timer = setTimeout(() => setTargetVerseNumber(null), 3000);
-      return () => clearTimeout(timer);
+    if (!targetVerseNumber) {
+      document.querySelector('main')?.scrollTo({ top: 0, behavior: 'instant' });
     }
-  }, [targetVerseNumber]);
+  }, [selectedBookId, selectedChapterNumber, targetVerseNumber]);
 
-  const currentBook = getBookById(selectedBookId) || CANONICAL_BOOKS[0];
-  const currentTranslationMeta =
-    SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0];
+  // Smooth scroll and focus target verse, auto-dismissing highlight after 3s
+  useEffect(() => {
+    if (!targetVerseNumber) return;
+    if (chapter) {
+      const scrollTimer = setTimeout(() => {
+        document.getElementById(`verse-${targetVerseNumber}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+      const dismissTimer = setTimeout(() => setTargetVerseNumber(null), 3000);
+      return () => {
+        clearTimeout(scrollTimer);
+        clearTimeout(dismissTimer);
+      };
+    }
+  }, [chapter, targetVerseNumber]);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,27 +135,19 @@ export const BibleView: React.FC<BibleViewProps> = ({
     setSelectedChapterNumber(1);
     saveLastBiblePosition({ translation: selectedTranslation, bookId, chapterNumber: 1 });
   };
-
   const handleChapterChange = (chapterNumber: number) => {
     setSelectedChapterNumber(chapterNumber);
     saveLastBiblePosition({ translation: selectedTranslation, bookId: selectedBookId, chapterNumber });
   };
-
   const handleTranslationChange = (translationId: string) => {
     setSelectedTranslation(translationId);
     saveLastBiblePosition({ translation: translationId, bookId: selectedBookId, chapterNumber: selectedChapterNumber });
   };
-
   const handlePrevChapter = () => {
-    if (selectedChapterNumber > 1) {
-      handleChapterChange(selectedChapterNumber - 1);
-    }
+    if (selectedChapterNumber > 1) handleChapterChange(selectedChapterNumber - 1);
   };
-
   const handleNextChapter = () => {
-    if (selectedChapterNumber < currentBook.chapterCount) {
-      handleChapterChange(selectedChapterNumber + 1);
-    }
+    if (selectedChapterNumber < currentBook.chapterCount) handleChapterChange(selectedChapterNumber + 1);
   };
 
   const handleSearch = async (q: string) => {
@@ -140,14 +163,8 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const handleSelectSearchResult = (res: BibleSearchResult) => {
     setSelectedBookId(res.reference.bookId);
     setSelectedChapterNumber(res.reference.chapter);
-    if (res.reference.startVerse) {
-      setTargetVerseNumber(res.reference.startVerse);
-    }
-    saveLastBiblePosition({
-      translation: selectedTranslation,
-      bookId: res.reference.bookId,
-      chapterNumber: res.reference.chapter,
-    });
+    if (res.reference.startVerse) setTargetVerseNumber(res.reference.startVerse);
+    saveLastBiblePosition({ translation: selectedTranslation, bookId: res.reference.bookId, chapterNumber: res.reference.chapter });
     setIsSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);
@@ -176,8 +193,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
 
   const handleCopy = () => {
     if (!activeVerse || !chapter) return;
-    const textToCopy = `"${activeVerse.text}" — ${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`;
-    navigator.clipboard.writeText(textToCopy);
+    navigator.clipboard.writeText(`"${activeVerse.text}" — ${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`);
     setCopiedNotification(true);
     setTimeout(() => {
       setCopiedNotification(false);
@@ -197,13 +213,15 @@ export const BibleView: React.FC<BibleViewProps> = ({
           selectedTranslation={selectedTranslation}
           chapterCount={currentBook.chapterCount}
           fontSize={fontSize}
+          currentBookName={currentBook.name}
           onBookChange={handleBookChange}
           onChapterChange={handleChapterChange}
           onPrevChapter={handlePrevChapter}
           onNextChapter={handleNextChapter}
           onTranslationChange={handleTranslationChange}
           onOpenSearch={() => setIsSearchOpen(true)}
-          onFontSizeChange={setFontSize}
+          onOpenPicker={() => setIsPickerOpen(true)}
+          onFontSizeChange={handleFontSizeChange}
         />
       </div>
 
