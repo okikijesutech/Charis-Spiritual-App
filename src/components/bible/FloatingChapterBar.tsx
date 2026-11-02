@@ -17,6 +17,7 @@ interface FloatingChapterBarProps {
   onPrevChapter: () => void
   onNextChapter: () => void
   onOpenPicker: () => void
+  onOpenTranslationPicker?: () => void
 }
 
 export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
@@ -28,6 +29,7 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
   onPrevChapter,
   onNextChapter,
   onOpenPicker,
+  onOpenTranslationPicker,
 }) => {
   if (typeof document === 'undefined') return null
 
@@ -67,7 +69,16 @@ export const FloatingChapterBar: React.FC<FloatingChapterBarProps> = ({
             {bookName} {chapterNumber}
           </span>
           <ChevronDown className="w-3 h-3 text-charis-text-muted" />
-          <span className="text-[10px] text-charis-primary uppercase font-mono bg-charis-primary/10 px-1.5 py-0.5 rounded">
+          <span 
+            onClick={(e) => {
+              if (onOpenTranslationPicker) {
+                e.stopPropagation()
+                onOpenTranslationPicker()
+              }
+            }}
+            className="text-[10px] text-charis-primary uppercase font-mono bg-charis-primary/10 hover:bg-charis-primary/20 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+            title="Switch translation or manage offline downloads"
+          >
             {translationShortName}
           </span>
         </button>

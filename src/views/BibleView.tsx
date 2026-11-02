@@ -9,6 +9,8 @@ import { FloatingChapterBar } from '../components/bible/FloatingChapterBar';
 import { BookChapterPickerModal } from '../components/bible/BookChapterPickerModal';
 import { ScriptureReadingSurface } from '../components/bible/ScriptureReadingSurface';
 import { AssistedSOAPDrawer } from '../components/bible/AssistedSOAPDrawer';
+import { TranslationPickerModal } from '../components/bible/TranslationPickerModal';
+import { bibleDownloadManager } from '../lib/bible/download-manager';
 import { getLastBiblePosition, saveLastBiblePosition } from '../lib/bible/persistence';
 import { useAuth } from '../context/AuthContext';
 import type { BibleChapter } from '../types/bible';
@@ -61,11 +63,17 @@ export const BibleView: React.FC<BibleViewProps> = ({
   // Search, Picker & Assisted SOAP drawer state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [isTranslationPickerOpen, setIsTranslationPickerOpen] = useState(false);
+  const [isInstalledLocally, setIsInstalledLocally] = useState(false);
   const [isSOAPDrawerOpen, setIsSOAPDrawerOpen] = useState(false);
   const [soapRef, setSoapRef] = useState<string | undefined>();
   const [soapVerseText, setSoapVerseText] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<BibleSearchResult[]>([]);
+
+  useEffect(() => {
+    bibleDownloadManager.isTranslationInstalled(selectedTranslation).then(setIsInstalledLocally);
+  }, [selectedTranslation, isTranslationPickerOpen]);
 
   const handleOpenSOAPAssistant = (ref: string, verseText?: string) => {
     setSoapRef(ref);
@@ -209,8 +217,10 @@ export const BibleView: React.FC<BibleViewProps> = ({
           onTranslationChange={handleTranslationChange}
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenPicker={() => setIsPickerOpen(true)}
+          onOpenTranslationPicker={() => setIsTranslationPickerOpen(true)}
           onOpenSOAP={() => handleOpenSOAPAssistant(`${chapter ? chapter.bookName : currentBook.name} ${selectedChapterNumber}`)}
           onFontSizeChange={handleFontSizeChange}
+          isTranslationInstalled={isInstalledLocally}
         />
       </div>
 
@@ -234,61 +244,22 @@ export const BibleView: React.FC<BibleViewProps> = ({
       />
 
       {/* 3. Floating Quick Chapter Stepper on Mobile (above bottom nav) */}
-      <FloatingChapterBar
-        bookName={chapter ? chapter.bookName : currentBook.name}
-        chapterNumber={selectedChapterNumber}
-        chapterCount={currentBook.chapterCount}
-        translationShortName={currentTranslationMeta.shortName}
-        isVisible={Boolean(isChromeVisible)}
-        onPrevChapter={handlePrevChapter}
-        onNextChapter={handleNextChapter}
-        onOpenPicker={() => setIsPickerOpen(true)}
-      />
+      <FloatingChapterBar bookName={chapter ? chapter.bookName : currentBook.name} chapterNumber={selectedChapterNumber} chapterCount={currentBook.chapterCount} translationShortName={currentTranslationMeta.shortName} isVisible={Boolean(isChromeVisible)} onPrevChapter={handlePrevChapter} onNextChapter={handleNextChapter} onOpenPicker={() => setIsPickerOpen(true)} onOpenTranslationPicker={() => setIsTranslationPickerOpen(true)} />
 
       {/* 4. Book, Chapter & Verse Quick Picker Modal */}
-      <BookChapterPickerModal
-        isOpen={isPickerOpen}
-        onClose={() => setIsPickerOpen(false)}
-        selectedBookId={selectedBookId}
-        selectedChapterNumber={selectedChapterNumber}
-        selectedVerseNumber={targetVerseNumber}
-        onSelectPassage={handleSelectPassage}
-      />
+      <BookChapterPickerModal isOpen={isPickerOpen} onClose={() => setIsPickerOpen(false)} selectedBookId={selectedBookId} selectedChapterNumber={selectedChapterNumber} selectedVerseNumber={targetVerseNumber} onSelectPassage={handleSelectPassage} />
 
-      {/* 5. Scripture Search Modal */}
-      <ScriptureSearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        searchQuery={searchQuery}
-        searchResults={searchResults}
-        onSearch={handleSearch}
-        onSelectResult={handleSelectSearchResult}
-      />
+      {/* 5. Translation Selector & Device Offline Download Modal */}
+      <TranslationPickerModal isOpen={isTranslationPickerOpen} onClose={() => setIsTranslationPickerOpen(false)} selectedTranslation={selectedTranslation} onSelectTranslation={handleTranslationChange} />
 
-      {/* 6. Verse Interaction Modal */}
-      <VerseActionModal
-        activeVerse={activeVerse}
-        chapter={chapter}
-        translationShortName={currentTranslationMeta.shortName}
-        copiedNotification={copiedNotification}
-        onClose={() => setActiveVerse(null)}
-        onToggleBookmark={handleToggleBookmark}
-        onCopy={handleCopy}
-        onHighlight={handleHighlight}
-        onAttachStudyNote={handleOpenSOAPAssistant}
-      />
+      {/* 6. Scripture Search Modal */}
+      <ScriptureSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} searchResults={searchResults} onSearch={handleSearch} onSelectResult={handleSelectSearchResult} />
 
-      {/* 7. In-Context Assisted SOAP Study Companion Drawer */}
-      <AssistedSOAPDrawer
-        isOpen={isSOAPDrawerOpen}
-        onClose={() => setIsSOAPDrawerOpen(false)}
-        bookId={selectedBookId}
-        bookName={chapter ? chapter.bookName : currentBook.name}
-        chapterNumber={selectedChapterNumber}
-        initialVerseRef={soapRef}
-        initialVerseText={soapVerseText}
-        activeUserId={activeUserId}
-      />
+      {/* 7. Verse Interaction Modal */}
+      <VerseActionModal activeVerse={activeVerse} chapter={chapter} translationShortName={currentTranslationMeta.shortName} copiedNotification={copiedNotification} onClose={() => setActiveVerse(null)} onToggleBookmark={handleToggleBookmark} onCopy={handleCopy} onHighlight={handleHighlight} onAttachStudyNote={handleOpenSOAPAssistant} />
+
+      {/* 8. In-Context Assisted SOAP Study Companion Drawer */}
+      <AssistedSOAPDrawer isOpen={isSOAPDrawerOpen} onClose={() => setIsSOAPDrawerOpen(false)} bookId={selectedBookId} bookName={chapter ? chapter.bookName : currentBook.name} chapterNumber={selectedChapterNumber} initialVerseRef={soapRef} initialVerseText={soapVerseText} activeUserId={activeUserId} />
     </div>
   );
 };

@@ -173,6 +173,28 @@ export class BibleDownloadManager {
     const list = await db.getAll('installed_translations');
     return list.map((item) => item.translationId);
   }
+
+  /**
+   * Check if a specific translation is installed on this device.
+   */
+  async isTranslationInstalled(translationId: string): Promise<boolean> {
+    const list = await this.getInstalledTranslations();
+    return list.includes(translationId.toLowerCase());
+  }
+
+  /**
+   * Calculate total storage occupied by offline translations on this device.
+   */
+  async getDeviceStorageSummary(): Promise<{ totalBytes: number; count: number; installedIds: string[] }> {
+    const db = await getDB();
+    const list = await db.getAll('installed_translations');
+    const totalBytes = list.reduce((acc, item) => acc + (item.sizeBytes || 4500000), 0);
+    return {
+      totalBytes,
+      count: list.length,
+      installedIds: list.map((i) => i.translationId),
+    };
+  }
 }
 
 export const bibleDownloadManager = new BibleDownloadManager();

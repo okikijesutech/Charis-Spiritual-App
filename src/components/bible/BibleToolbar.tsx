@@ -29,8 +29,10 @@ interface BibleToolbarProps {
   onTranslationChange: (translationId: string) => void;
   onOpenSearch: () => void;
   onOpenPicker?: () => void;
+  onOpenTranslationPicker?: () => void;
   onOpenSOAP?: () => void;
   onFontSizeChange: (updater: (prev: number) => number) => void;
+  isTranslationInstalled?: boolean;
 }
 
 export const BibleToolbar: React.FC<BibleToolbarProps> = ({
@@ -47,9 +49,14 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
   onTranslationChange,
   onOpenSearch,
   onOpenPicker,
+  onOpenTranslationPicker,
   onOpenSOAP,
   onFontSizeChange,
+  isTranslationInstalled = false,
 }) => {
+  const currentTranslationMeta =
+    SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0];
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-2xl bg-charis-surface border border-charis-border shadow-subtle">
       <div className="flex flex-wrap items-center gap-2">
@@ -130,22 +137,40 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
           </button>
         </div>
 
-        {/* Translation Select */}
-        <div className="relative inline-block shrink-0">
-          <select
-            value={selectedTranslation}
-            onChange={(e) => onTranslationChange(e.target.value)}
-            className="appearance-none font-sans font-semibold text-xs bg-charis-surface text-charis-text border border-charis-border rounded-xl px-2.5 sm:px-3 py-2 pr-6 sm:pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle max-w-[100px] sm:max-w-none truncate"
-            aria-label="Select Bible translation"
+        {/* Translation Selector Trigger */}
+        {onOpenTranslationPicker ? (
+          <button
+            type="button"
+            onClick={onOpenTranslationPicker}
+            className="flex items-center gap-1.5 font-sans font-semibold text-xs bg-charis-surface hover:bg-charis-border-subtle text-charis-text border border-charis-border rounded-xl px-2.5 sm:px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle transition-colors shrink-0"
+            title="Select Bible Translation & Device Offline Status"
+            aria-label={`Current translation: ${currentTranslationMeta.shortName} (${currentTranslationMeta.name}). Click to change or manage offline downloads.`}
           >
-            {SUPPORTED_TRANSLATIONS.map((t) => (
-              <option key={t.id} value={t.id} className="bg-charis-surface text-charis-text py-1.5">
-                {t.shortName} — {t.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-charis-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-        </div>
+            <span>{currentTranslationMeta.shortName}</span>
+            {isTranslationInstalled ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Saved offline on this device" />
+            ) : (
+              <span className="text-[10px] text-charis-text-muted" title="Cloud API / Online">☁</span>
+            )}
+            <ChevronDown className="w-3.5 h-3.5 text-charis-text-muted" />
+          </button>
+        ) : (
+          <div className="relative inline-block shrink-0">
+            <select
+              value={selectedTranslation}
+              onChange={(e) => onTranslationChange(e.target.value)}
+              className="appearance-none font-sans font-semibold text-xs bg-charis-surface text-charis-text border border-charis-border rounded-xl px-2.5 sm:px-3 py-2 pr-6 sm:pr-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle max-w-[100px] sm:max-w-none truncate"
+              aria-label="Select Bible translation"
+            >
+              {SUPPORTED_TRANSLATIONS.map((t) => (
+                <option key={t.id} value={t.id} className="bg-charis-surface text-charis-text py-1.5">
+                  {t.shortName} — {t.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-charis-text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        )}
 
         {/* Quick Search Button */}
         <button
