@@ -8,6 +8,7 @@ import { getDB } from '../db/indexeddb';
 import { SAMPLE_CHAPTERS } from './sample-scripture';
 import { getBookById, SUPPORTED_TRANSLATIONS } from './canon';
 import { remoteBibleApiAdapter } from './api-adapter';
+import { getBundledKjvChapter, seedBundledKjv } from './bundled-kjv';
 import type { BibleChapter } from '../../types/bible';
 
 export interface IBibleProvider {
@@ -29,14 +30,32 @@ export class CharisBibleProvider implements IBibleProvider {
   ): Promise<BibleChapter> {
     const id = `${translationId.toLowerCase()}:${bookId.toUpperCase()}:${chapterNumber}`;
 
-    // 1. Check IndexedDB persistent store
+    // 1. Check IndexedDB persistent store (auto-purging stale/placeholder records)
     const db = await getDB();
     const cached = await db.get('bible_chapters', id);
     if (cached) {
-      return { ...cached, isCachedLocally: true };
+      const isCorrupted =
+        cached.isOfflinePlaceholder ||
+        !cached.verses ||
+        cached.verses.length === 0 ||
+        cached.verses.some((v: any) => v.text?.includes('available for offline download'));
+
+      if (isCorrupted) {
+        await db.delete('bible_chapters', id);
+      } else {
+        return { ...cached, isCachedLocally: true };
+      }
     }
 
-    // 2. Check bundled sample Scripture store (instant offline availability)
+    // 2. Bundled full KJV Scripture Store (instant 0ms offline availability for all 66 books)
+    if (translationId.toLowerCase() === 'kjv') {
+      const bundledKjv = await getBundledKjvChapter(bookId, chapterNumber);
+      if (bundledKjv) {
+        return bundledKjv;
+      }
+    }
+
+    // 3. Check bundled sample Scripture store (instant offline availability)
     const sample = SAMPLE_CHAPTERS.find(
       (c) =>
         c.translationId.toLowerCase() === translationId.toLowerCase() &&
@@ -96,6 +115,7 @@ export class CharisBibleProvider implements IBibleProvider {
    * Check if a full translation has been installed offline.
    */
   async isTranslationInstalled(translationId: string): Promise<boolean> {
+    if (translationId.toLowerCase() === 'kjv') return true;
     const db = await getDB();
     const record = await db.get('installed_translations', translationId.toLowerCase());
     return Boolean(record);
@@ -108,6 +128,13 @@ export class CharisBibleProvider implements IBibleProvider {
     translationId: string,
     onProgress?: (percent: number) => void
   ): Promise<void> {
+    if (translationId.toLowerCase() === 'kjv') {
+      if (onProgress) onProgress(50);
+      await seedBundledKjv();
+      if (onProgress) onProgress(100);
+      return;
+    }
+
     const target = SUPPORTED_TRANSLATIONS.find((t) => t.id === translationId.toLowerCase());
     if (!target) {
       throw new Error(`Unsupported translation: ${translationId}`);
@@ -169,7 +196,9 @@ export class CharisBibleProvider implements IBibleProvider {
   async listInstalledTranslations(): Promise<string[]> {
     const db = await getDB();
     const installed = await db.getAll('installed_translations');
-    return installed.map((item) => item.translationId);
+    const set = new Set(installed.map((item) => item.translationId));
+    set.add('kjv');
+    return Array.from(set);
   }
 }
 

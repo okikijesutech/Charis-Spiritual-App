@@ -171,13 +171,16 @@ export class BibleDownloadManager {
   async getInstalledTranslations(): Promise<string[]> {
     const db = await getDB();
     const list = await db.getAll('installed_translations');
-    return list.map((item) => item.translationId);
+    const set = new Set(list.map((item) => item.translationId));
+    set.add('kjv');
+    return Array.from(set);
   }
 
   /**
    * Check if a specific translation is installed on this device.
    */
   async isTranslationInstalled(translationId: string): Promise<boolean> {
+    if (translationId.toLowerCase() === 'kjv') return true;
     const list = await this.getInstalledTranslations();
     return list.includes(translationId.toLowerCase());
   }
@@ -188,11 +191,12 @@ export class BibleDownloadManager {
   async getDeviceStorageSummary(): Promise<{ totalBytes: number; count: number; installedIds: string[] }> {
     const db = await getDB();
     const list = await db.getAll('installed_translations');
-    const totalBytes = list.reduce((acc, item) => acc + (item.sizeBytes || 4500000), 0);
+    const installedIds = Array.from(new Set([...list.map((i) => i.translationId), 'kjv']));
+    const totalBytes = list.reduce((acc, item) => acc + (item.sizeBytes || 4500000), 0) + (list.some(i => i.translationId === 'kjv') ? 0 : 4220000);
     return {
       totalBytes,
-      count: list.length,
-      installedIds: list.map((i) => i.translationId),
+      count: installedIds.length,
+      installedIds,
     };
   }
 }

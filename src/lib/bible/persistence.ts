@@ -16,7 +16,7 @@ export const STORAGE_KEY = 'charis_last_bible_position';
 export const DEFAULT_FIRST_TIME_POSITION: LastBiblePosition = {
   bookId: 'GEN',
   chapterNumber: 1,
-  translation: 'nlt',
+  translation: 'kjv',
 };
 
 /**

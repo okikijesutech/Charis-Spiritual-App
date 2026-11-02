@@ -9,11 +9,11 @@ import {
 } from '../types'
 
 export const mockUserProfile: UserProfile = {
-  name: 'Julian Vance',
+  name: 'Friend',
   email: 'julian@example.com',
   timeZone: 'Europe/London (UTC+1)',
-  preferredTranslation: 'BSB — Berean Standard Bible',
-  downloadedTranslations: ['BSB — Berean Standard Bible', 'KJV — King James Version']
+  preferredTranslation: 'KJV — King James Version',
+  downloadedTranslations: ['KJV — King James Version']
 }
 
 export const mockScripturePsalm23: ScriptureVerse[] = [

@@ -16,12 +16,14 @@ import { activityRepository } from '../lib/db/activity-repository';
 
 interface HomeViewProps {
   onNavigate: (tab: NavDestination) => void;
+  onOpenPassage?: (passageRef: string, journeyMeta?: { planId: string; planName: string; assignmentId: string; dayNumber: number }) => void;
   onOpenQuickAction: () => void;
   onOpenEthos: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onNavigate,
+  onOpenPassage,
   onOpenQuickAction,
   onOpenEthos,
 }) => {
@@ -60,6 +62,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             key="featured_reading"
             userId={activeUserId}
             onNavigate={onNavigate}
+            onOpenPassage={onOpenPassage}
           />
         );
       case 'quick_actions':

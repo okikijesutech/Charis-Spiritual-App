@@ -21,7 +21,10 @@ interface PlanCardProps {
   onSetFeatured: (planId: string) => void;
   onOpenReschedule: () => void;
   onDeletePlan: (planId: string) => void;
-  onOpenPassage?: (passageRef: string) => void;
+  onOpenPassage?: (
+    passageRef: string,
+    journeyMeta?: { planId: string; planName: string; assignmentId: string; dayNumber: number }
+  ) => void;
 }
 
 export const PlanCard: React.FC<PlanCardProps> = ({
@@ -188,7 +191,14 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 {/* Read Button */}
                 {onOpenPassage && assignment.passages[0] && (
                   <button
-                    onClick={() => onOpenPassage(assignment.passages[0].formatted)}
+                    onClick={() =>
+                      onOpenPassage(assignment.passages[0].formatted, {
+                        planId: plan.id,
+                        planName: plan.name,
+                        assignmentId: assignment.id,
+                        dayNumber: assignment.dayNumber,
+                      })
+                    }
                     className="p-1.5 rounded-lg text-charis-primary hover:bg-charis-primary/10 transition-colors shrink-0"
                     aria-label={`Read ${passagesText}`}
                   >

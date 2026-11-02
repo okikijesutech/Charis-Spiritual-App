@@ -3,17 +3,25 @@ import { BookOpen, CheckCircle2, Circle, ArrowRight, Sparkles } from 'lucide-rea
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { planRepository } from '../../lib/db/plan-repository';
+import { syncQueueManager } from '../../lib/sync/sync-queue';
+import { syncEngine } from '../../lib/sync/sync-engine';
+import { generateUUID } from '../../lib/id';
 import type { ReadingPlan, ReadingPlanAssignment } from '../../types/plan';
 import type { NavDestination } from '../../types';
 
 interface FeaturedReadingSectionProps {
   userId: string;
   onNavigate: (tab: NavDestination) => void;
+  onOpenPassage?: (
+    passageRef: string,
+    journeyMeta?: { planId: string; planName: string; assignmentId: string; dayNumber: number }
+  ) => void;
 }
 
 export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
   userId,
   onNavigate,
+  onOpenPassage,
 }) => {
   const [featuredPlan, setFeaturedPlan] = useState<ReadingPlan | null>(null);
   const [todayAssignment, setTodayAssignment] = useState<ReadingPlanAssignment | null>(null);
@@ -63,6 +71,28 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
     };
     await planRepository.save(updatedPlan);
     setFeaturedPlan(updatedPlan);
+
+    await syncQueueManager.enqueue({
+      operationId: generateUUID(),
+      userId,
+      entityType: 'reading_plan_assignment',
+      entityId: todayAssignment.id,
+      action: 'update',
+      baseVersion: todayAssignment.sync?.localVersion ?? 1,
+      payload: updated,
+    });
+
+    await syncQueueManager.enqueue({
+      operationId: generateUUID(),
+      userId,
+      entityType: 'reading_plan',
+      entityId: featuredPlan.id,
+      action: 'update',
+      baseVersion: featuredPlan.sync?.localVersion ?? 1,
+      payload: updatedPlan,
+    });
+
+    syncEngine.triggerAutoSync(userId);
   };
 
   if (!featuredPlan || !todayAssignment) {
@@ -146,7 +176,19 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
           <Button
             variant="terracotta-soft"
             size="sm"
-            onClick={() => onNavigate('bible')}
+            onClick={() => {
+              const ref = todayAssignment.passages[0]?.formatted || passagesText;
+              if (onOpenPassage && ref) {
+                onOpenPassage(ref, {
+                  planId: featuredPlan.id,
+                  planName: featuredPlan.name,
+                  assignmentId: todayAssignment.id,
+                  dayNumber: todayAssignment.dayNumber,
+                });
+              } else {
+                onNavigate('bible');
+              }
+            }}
             className="gap-1.5 text-xs"
           >
             <span>Open in Bible</span>

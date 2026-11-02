@@ -8,7 +8,10 @@ import { PlanBuilderModal } from '../components/plans/PlanBuilderModal';
 import { RescheduleModal } from '../components/plans/RescheduleModal';
 
 interface PlansViewProps {
-  onOpenPassage?: (passageRef: string) => void;
+  onOpenPassage?: (
+    passageRef: string,
+    journeyMeta?: { planId: string; planName: string; assignmentId: string; dayNumber: number }
+  ) => void;
 }
 
 export const PlansView: React.FC<PlansViewProps> = ({ onOpenPassage }) => {

@@ -6,10 +6,18 @@
  */
 
 import React from 'react'
-import { Bookmark, ChevronLeft, ChevronRight, Loader2, BookMarked, Sparkles, CloudOff, RefreshCw } from 'lucide-react'
+import { Bookmark, ChevronLeft, ChevronRight, Loader2, BookMarked, Sparkles, CloudOff, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import type { BibleChapter, CanonicalBook, BibleTranslationMeta } from '../../types/bible'
 import type { InteractiveVerse } from './VerseActionModal'
+
+export interface ActiveJourneyContext {
+  planId: string;
+  planName: string;
+  assignmentId: string;
+  dayNumber: number;
+  passages?: string[];
+}
 
 interface ScriptureReadingSurfaceProps {
   chapter: BibleChapter | null
@@ -27,24 +35,17 @@ interface ScriptureReadingSurfaceProps {
   onNextChapter: () => void
   onAttachStudyNote?: (verseRef: string) => void
   onRetry?: () => void
+  onSwitchTranslation?: (translationId: string) => void
+  journeyContext?: ActiveJourneyContext | null
+  isJourneyCompleted?: boolean
+  onCompleteJourney?: () => void
 }
 
 export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = ({
-  chapter,
-  currentBook,
-  selectedChapterNumber,
-  targetVerseNumber,
-  currentTranslationMeta,
-  fontSize,
-  interactiveVerses,
-  isLoading,
-  isChromeVisible,
-  onToggleChrome,
-  onSelectVerse,
-  onPrevChapter,
-  onNextChapter,
-  onAttachStudyNote,
-  onRetry,
+  chapter, currentBook, selectedChapterNumber, targetVerseNumber, currentTranslationMeta,
+  fontSize, interactiveVerses, isLoading, isChromeVisible, onToggleChrome, onSelectVerse,
+  onPrevChapter, onNextChapter, onAttachStudyNote, onRetry, onSwitchTranslation,
+  journeyContext, isJourneyCompleted = false, onCompleteJourney,
 }) => {
   return (
     <article
@@ -100,18 +101,34 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
                 {chapter ? `${chapter.bookName} ${chapter.chapterNumber}` : `${currentBook.name} ${selectedChapterNumber}`} is not currently stored on this device. Connect to the internet to download and read.
               </p>
             </div>
-            {onRetry && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRetry();
-                }}
-                className="px-4 py-2 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white text-xs font-medium transition-colors shadow-subtle inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Retry Connection</span>
-              </button>
-            )}
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              {onRetry && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRetry();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-charis-surface border border-charis-border hover:bg-charis-border-subtle text-charis-text text-xs font-medium transition-colors shadow-subtle inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Retry Connection</span>
+                </button>
+              )}
+              {currentTranslationMeta.id !== 'kjv' && onSwitchTranslation && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSwitchTranslation('kjv');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white text-xs font-semibold transition-colors shadow-subtle inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Read in KJV (Offline Ready)</span>
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div
@@ -180,6 +197,51 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
               <BookMarked className="w-3.5 h-3.5 text-charis-primary" />
               <span>Begin SOAP Study</span>
             </button>
+          </div>
+        )}
+
+        {/* Journey Milestone & End-of-Chapter Completion Card */}
+        {journeyContext && (
+          <div className="mt-8 p-4 sm:p-5 rounded-2xl bg-charis-surface border border-charis-border/80 shadow-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <span className="p-2.5 rounded-xl bg-charis-primary/10 text-charis-primary">
+                <Sparkles className="w-5 h-5" />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-charis-primary uppercase tracking-wider">
+                    Journey Day {journeyContext.dayNumber}
+                  </span>
+                  <span className="text-xs text-charis-text-muted">· {journeyContext.planName}</span>
+                </div>
+                <p className="text-xs text-charis-text mt-0.5 font-medium">
+                  {isJourneyCompleted
+                    ? 'Completed today’s reading · Grace over streaks'
+                    : 'End of chapter reached. Acknowledge today’s reading rhythm.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              {isJourneyCompleted ? (
+                <Badge variant="sage" className="gap-1.5 py-1.5 px-3 text-xs">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Completed</span>
+                </Badge>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCompleteJourney?.();
+                  }}
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white text-xs font-semibold transition-colors shadow-subtle inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Mark Day Read</span>
+                </button>
+              )}
+            </div>
           </div>
         )}
 

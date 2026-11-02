@@ -22,6 +22,15 @@ import { activityRepository } from './lib/db/activity-repository'
 import { syncQueueManager } from './lib/sync/sync-queue'
 import { syncEngine } from './lib/sync/sync-engine'
 import { generateUUID } from './lib/id'
+import { parseScriptureReference } from './lib/bible/canon'
+
+export interface ActiveJourneyContext {
+  planId: string;
+  planName: string;
+  assignmentId: string;
+  dayNumber: number;
+  passages?: string[];
+}
 
 export const AppContent: React.FC = () => {
   const { user } = useAuth()
@@ -38,11 +47,44 @@ export const AppContent: React.FC = () => {
   const [isQuickActionOpen, setIsQuickActionOpen] = useState<boolean>(false)
   const [isReaderChromeVisible, setIsReaderChromeVisible] = useState<boolean>(true)
   
-  // Link state between Bible and Study Journal
+  // Link state between Bible, Study Journal, and Journey plans
   const [studyInitialRef, setStudyInitialRef] = useState<string | undefined>(undefined)
+  const [activePassageTarget, setActivePassageTarget] = useState<{
+    bookId: string;
+    chapterNumber: number;
+    verseNumber?: number;
+  } | null>(null)
+  const [activeJourneyContext, setActiveJourneyContext] = useState<ActiveJourneyContext | null>(null)
 
   const handleSelectTab = (tab: NavDestination) => {
     setCurrentTab(tab)
+    setIsReaderChromeVisible(true)
+  }
+
+  const handleOpenPassage = (
+    passageRef?: string,
+    journeyMeta?: { planId: string; planName: string; assignmentId: string; dayNumber: number }
+  ) => {
+    if (passageRef) {
+      const firstRef = passageRef.split(',')[0].trim()
+      const parsed = parseScriptureReference(firstRef)
+      if (parsed) {
+        setActivePassageTarget({
+          bookId: parsed.bookId,
+          chapterNumber: parsed.chapter,
+          verseNumber: parsed.startVerse,
+        })
+      }
+    }
+    if (journeyMeta) {
+      setActiveJourneyContext({
+        ...journeyMeta,
+        passages: passageRef ? passageRef.split(',').map((s) => s.trim()) : undefined,
+      })
+    } else {
+      setActiveJourneyContext(null)
+    }
+    setCurrentTab('bible')
     setIsReaderChromeVisible(true)
   }
 
@@ -82,6 +124,7 @@ export const AppContent: React.FC = () => {
         {currentTab === 'home' && (
           <HomeView
             onNavigate={handleSelectTab}
+            onOpenPassage={handleOpenPassage}
             onOpenQuickAction={() => setIsQuickActionOpen(true)}
             onOpenEthos={() => setIsEthosOpen(true)}
           />
@@ -92,6 +135,10 @@ export const AppContent: React.FC = () => {
             onAttachStudyNote={handleAttachStudyNote}
             isChromeVisible={isReaderChromeVisible}
             onToggleChrome={() => setIsReaderChromeVisible(prev => !prev)}
+            targetPassage={activePassageTarget}
+            onClearTargetPassage={() => setActivePassageTarget(null)}
+            journeyContext={activeJourneyContext}
+            onClearJourneyContext={() => setActiveJourneyContext(null)}
           />
         )}
 
@@ -107,7 +154,7 @@ export const AppContent: React.FC = () => {
         )}
 
         {currentTab === 'plans' && (
-          <PlansView onOpenPassage={() => setCurrentTab('bible')} />
+          <PlansView onOpenPassage={handleOpenPassage} />
         )}
       </div>
 

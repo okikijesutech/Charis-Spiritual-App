@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/generate-bundled-kjv.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "security:check": "node scripts/security-check.mjs",
