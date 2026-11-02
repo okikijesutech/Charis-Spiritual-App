@@ -50,6 +50,8 @@ export interface BibleChapter {
   verses: BibleVerse[];
   attribution?: string;
   title?: string;
+  isOfflinePlaceholder?: boolean;
+  isCachedLocally?: boolean;
 }
 
 export interface ScriptureBookmark {

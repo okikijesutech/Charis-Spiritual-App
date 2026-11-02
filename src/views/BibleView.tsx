@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { bibleProvider } from '../lib/bible/provider';
 import { CANONICAL_BOOKS, getBookById, SUPPORTED_TRANSLATIONS } from '../lib/bible/canon';
 import { scriptureSearchService, type BibleSearchResult } from '../lib/bible/search';
@@ -122,7 +122,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
     }
   }, [chapter, targetVerseNumber]);
 
-  useEffect(() => {
+  const loadChapter = useCallback(() => {
     let isMounted = true;
     setIsLoading(true);
     bibleProvider.getChapter(selectedTranslation, selectedBookId, selectedChapterNumber)
@@ -138,27 +138,20 @@ export const BibleView: React.FC<BibleViewProps> = ({
     return () => { isMounted = false; };
   }, [selectedTranslation, selectedBookId, selectedChapterNumber]);
 
-  const handleBookChange = (bookId: string) => {
-    setSelectedBookId(bookId);
-    setSelectedChapterNumber(1);
-    saveLastBiblePosition({ translation: selectedTranslation, bookId, chapterNumber: 1 });
-  };
-  const handleChapterChange = (chapterNumber: number) => {
-    setSelectedChapterNumber(chapterNumber);
-    saveLastBiblePosition({ translation: selectedTranslation, bookId: selectedBookId, chapterNumber });
-  };
-  const handleTranslationChange = (translationId: string) => {
-    setSelectedTranslation(translationId);
-    saveLastBiblePosition({ translation: translationId, bookId: selectedBookId, chapterNumber: selectedChapterNumber });
-  };
+  useEffect(() => {
+    return loadChapter();
+  }, [loadChapter]);
+
+  const handleBookChange = (bookId: string) => { setSelectedBookId(bookId); setSelectedChapterNumber(1); saveLastBiblePosition({ translation: selectedTranslation, bookId, chapterNumber: 1 }); };
+  const handleChapterChange = (chapterNumber: number) => { setSelectedChapterNumber(chapterNumber); saveLastBiblePosition({ translation: selectedTranslation, bookId: selectedBookId, chapterNumber }); };
+  const handleTranslationChange = (translationId: string) => { setSelectedTranslation(translationId); saveLastBiblePosition({ translation: translationId, bookId: selectedBookId, chapterNumber: selectedChapterNumber }); };
   const handlePrevChapter = () => { if (selectedChapterNumber > 1) handleChapterChange(selectedChapterNumber - 1); };
   const handleNextChapter = () => { if (selectedChapterNumber < currentBook.chapterCount) handleChapterChange(selectedChapterNumber + 1); };
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
     if (!q.trim()) { setSearchResults([]); return; }
-    const results = await scriptureSearchService.search(q, selectedTranslation);
-    setSearchResults(results);
+    setSearchResults(await scriptureSearchService.search(q, selectedTranslation));
   };
 
   const handleSelectSearchResult = (res: BibleSearchResult) => {
@@ -169,6 +162,13 @@ export const BibleView: React.FC<BibleViewProps> = ({
     setIsSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);
+  };
+
+  const handleSelectPassage = (bookId: string, chapterNum: number, verseNum?: number) => {
+    setSelectedBookId(bookId);
+    setSelectedChapterNumber(chapterNum);
+    setTargetVerseNumber(verseNum ?? null);
+    saveLastBiblePosition({ translation: selectedTranslation, bookId, chapterNumber: chapterNum });
   };
 
   const handleToggleBookmark = (v: InteractiveVerse) => {
@@ -230,6 +230,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
         onPrevChapter={handlePrevChapter}
         onNextChapter={handleNextChapter}
         onAttachStudyNote={handleOpenSOAPAssistant}
+        onRetry={loadChapter}
       />
 
       {/* 3. Floating Quick Chapter Stepper on Mobile (above bottom nav) */}
@@ -251,12 +252,7 @@ export const BibleView: React.FC<BibleViewProps> = ({
         selectedBookId={selectedBookId}
         selectedChapterNumber={selectedChapterNumber}
         selectedVerseNumber={targetVerseNumber}
-        onSelectPassage={(bookId, chapterNum, verseNum) => {
-          setSelectedBookId(bookId);
-          setSelectedChapterNumber(chapterNum);
-          setTargetVerseNumber(verseNum ?? null);
-          saveLastBiblePosition({ translation: selectedTranslation, bookId, chapterNumber: chapterNum });
-        }}
+        onSelectPassage={handleSelectPassage}
       />
 
       {/* 5. Scripture Search Modal */}

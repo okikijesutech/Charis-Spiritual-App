@@ -131,10 +131,57 @@ function checkEnvironmentHygiene() {
   }
 }
 
+// 4. Scan vercel.json Content-Security-Policy to ensure all external API endpoints are permitted
+function checkVercelContentSecurityPolicy() {
+  const vercelPath = 'vercel.json';
+  if (!fs.existsSync(vercelPath)) {
+    report('FAIL', 'Missing vercel.json deployment configuration');
+    return;
+  }
+
+  const vercelConfig = JSON.parse(fs.readFileSync(vercelPath, 'utf-8'));
+  const headers = vercelConfig.headers?.[0]?.headers || [];
+  const cspHeader = headers.find((h) => h.key === 'Content-Security-Policy');
+  if (!cspHeader) {
+    report('FAIL', 'vercel.json is missing Content-Security-Policy header');
+    return;
+  }
+
+  const cspValue = cspHeader.value || '';
+  const connectSrcMatch = cspValue.match(/connect-src\s+([^;]+)/);
+  if (!connectSrcMatch) {
+    report('FAIL', 'Content-Security-Policy is missing connect-src directive');
+    return;
+  }
+
+  const connectSrc = connectSrcMatch[1];
+  const requiredEndpoints = [
+    'https://*.supabase.co',
+    'wss://*.supabase.co',
+    'https://bible-api.com',
+    'https://bolls.life',
+    'https://bible-go-api.rkeplin.com',
+  ];
+
+  let missing = [];
+  for (const endpoint of requiredEndpoints) {
+    if (!connectSrc.includes(endpoint)) {
+      missing.push(endpoint);
+    }
+  }
+
+  if (missing.length > 0) {
+    report('FAIL', `CSP connect-src in vercel.json is missing required API endpoints: ${missing.join(', ')}`);
+  } else {
+    report('PASS', 'vercel.json CSP connect-src permits all external Bible APIs and Supabase endpoints');
+  }
+}
+
 console.log('--- Charis Phase 2 Security Review Gate ---');
 checkClientBundleLeaks();
 checkSqlMigrationsRLS();
 checkEnvironmentHygiene();
+checkVercelContentSecurityPolicy();
 console.log('-------------------------------------------');
 
 if (exitCode !== 0) {

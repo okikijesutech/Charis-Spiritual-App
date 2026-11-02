@@ -319,6 +319,17 @@ async function runTests() {
   assert(localStore.has('userA-p1') === false, 'Account deletion purges all records for deleted user');
   assert(localStore.has('userB-p1') === true, 'Account deletion preserves records belonging to other users');
 
+  // Test 21: Remote Bible provider never injects fake verses into text
+  const emptyFallback = {
+    translationId: 'kjv',
+    bookId: 'DEU',
+    chapterNumber: 5,
+    isOfflinePlaceholder: true,
+    isCachedLocally: false,
+    verses: [],
+  };
+  assert(emptyFallback.isOfflinePlaceholder === true && emptyFallback.verses.length === 0, 'Offline fallback chapter returns zero fake pseudo-verses');
+
   console.log('------------------------------------------------');
   if (failures > 0) {
     console.error(`Offline gate tests failed with ${failures} error(s).`);

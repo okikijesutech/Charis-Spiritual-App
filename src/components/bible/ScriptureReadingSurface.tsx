@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import { Bookmark, ChevronLeft, ChevronRight, Loader2, BookMarked, Sparkles } from 'lucide-react'
+import { Bookmark, ChevronLeft, ChevronRight, Loader2, BookMarked, Sparkles, CloudOff, RefreshCw } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import type { BibleChapter, CanonicalBook, BibleTranslationMeta } from '../../types/bible'
 import type { InteractiveVerse } from './VerseActionModal'
@@ -26,6 +26,7 @@ interface ScriptureReadingSurfaceProps {
   onPrevChapter: () => void
   onNextChapter: () => void
   onAttachStudyNote?: (verseRef: string) => void
+  onRetry?: () => void
 }
 
 export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = ({
@@ -43,6 +44,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
   onPrevChapter,
   onNextChapter,
   onAttachStudyNote,
+  onRetry,
 }) => {
   return (
     <article
@@ -69,8 +71,11 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
             <span className="text-xs font-semibold tracking-wider uppercase text-charis-primary">
               {currentTranslationMeta.name} ({currentTranslationMeta.shortName})
             </span>
-            <Badge variant={currentTranslationMeta.offlineDownloadable ? 'sage' : 'outline'} size="sm">
-              {currentTranslationMeta.offlineDownloadable ? 'Offline Ready' : 'Online API'}
+            <Badge
+              variant={chapter?.isOfflinePlaceholder ? 'terracotta' : chapter?.isCachedLocally ? 'sage' : 'outline'}
+              size="sm"
+            >
+              {chapter?.isOfflinePlaceholder ? 'Connection Needed' : chapter?.isCachedLocally ? 'Offline Cached' : 'Online API'}
             </Badge>
           </div>
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-charis-text mt-1">
@@ -81,49 +86,77 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
           )}
         </header>
 
-        {/* Verses Container */}
-        <div
-          className="mt-8 font-serif leading-[1.75] text-charis-text selection:bg-charis-primary/20 space-y-4"
-          style={{ fontSize: `${fontSize}px` }}
-        >
-          {interactiveVerses.map((v) => {
-            const isTarget = targetVerseNumber === v.verseNumber
-            let highlightStyle = ''
-            if (isTarget) {
-              highlightStyle = 'ring-2 ring-charis-primary bg-charis-primary/10 px-1 rounded-lg'
-            } else if (v.isHighlighted) {
-              if (v.highlightColor === 'terracotta') highlightStyle = 'bg-charis-primary/15 px-1 rounded'
-              else if (v.highlightColor === 'sage') highlightStyle = 'bg-charis-secondary/15 px-1 rounded'
-              else highlightStyle = 'bg-amber-400/20 px-1 rounded'
-            }
-
-            return (
-              <p
-                key={v.verseNumber}
-                id={`verse-${v.verseNumber}`}
-                onClick={(e) => {
-                  if (!isChromeVisible) {
-                    e.stopPropagation()
-                    onToggleChrome?.()
-                    return
-                  }
-                  onSelectVerse(v)
-                }}
-                className={`group cursor-pointer rounded-lg p-1.5 -mx-1.5 transition-all duration-300 hover:bg-charis-border-subtle/70 ${highlightStyle}`}
-                tabIndex={0}
-                role="button"
-              >
-                <sup className="text-xs font-sans font-bold text-charis-primary mr-2 select-none">
-                  {v.verseNumber}
-                </sup>
-                <span>{v.text}</span>
-                {v.isBookmarked && (
-                  <Bookmark className="inline-block w-3.5 h-3.5 ml-1.5 text-charis-primary fill-current align-middle" />
-                )}
+        {/* Verses Container or Offline State */}
+        {chapter?.isOfflinePlaceholder || interactiveVerses.length === 0 ? (
+          <div className="py-12 text-center space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-charis-primary/10 text-charis-primary mx-auto flex items-center justify-center">
+              <CloudOff className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-serif font-bold text-charis-text">
+                Passage Not Cached Offline
+              </h3>
+              <p className="text-xs text-charis-text-muted max-w-sm mx-auto leading-relaxed">
+                {chapter ? `${chapter.bookName} ${chapter.chapterNumber}` : `${currentBook.name} ${selectedChapterNumber}`} is not currently stored on this device. Connect to the internet to download and read.
               </p>
-            )
-          })}
-        </div>
+            </div>
+            {onRetry && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRetry();
+                }}
+                className="px-4 py-2 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white text-xs font-medium transition-colors shadow-subtle inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Retry Connection</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div
+            className="mt-8 font-serif leading-[1.75] text-charis-text selection:bg-charis-primary/20 space-y-4"
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            {interactiveVerses.map((v) => {
+              const isTarget = targetVerseNumber === v.verseNumber
+              let highlightStyle = ''
+              if (isTarget) {
+                highlightStyle = 'ring-2 ring-charis-primary bg-charis-primary/10 px-1 rounded-lg'
+              } else if (v.isHighlighted) {
+                if (v.highlightColor === 'terracotta') highlightStyle = 'bg-charis-primary/15 px-1 rounded'
+                else if (v.highlightColor === 'sage') highlightStyle = 'bg-charis-secondary/15 px-1 rounded'
+                else highlightStyle = 'bg-amber-400/20 px-1 rounded'
+              }
+
+              return (
+                <p
+                  key={v.verseNumber}
+                  id={`verse-${v.verseNumber}`}
+                  onClick={(e) => {
+                    if (!isChromeVisible) {
+                      e.stopPropagation()
+                      onToggleChrome?.()
+                      return
+                    }
+                    onSelectVerse(v)
+                  }}
+                  className={`group cursor-pointer rounded-lg p-1.5 -mx-1.5 transition-all duration-300 hover:bg-charis-border-subtle/70 ${highlightStyle}`}
+                  tabIndex={0}
+                  role="button"
+                >
+                  <sup className="text-xs font-sans font-bold text-charis-primary mr-2 select-none">
+                    {v.verseNumber}
+                  </sup>
+                  <span>{v.text}</span>
+                  {v.isBookmarked && (
+                    <Bookmark className="inline-block w-3.5 h-3.5 ml-1.5 text-charis-primary fill-current align-middle" />
+                  )}
+                </p>
+              )
+            })}
+          </div>
+        )}
 
         {/* Contemplative Formation Bridge: Turn Reading into SOAP Study */}
         {onAttachStudyNote && (

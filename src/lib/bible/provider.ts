@@ -33,7 +33,7 @@ export class CharisBibleProvider implements IBibleProvider {
     const db = await getDB();
     const cached = await db.get('bible_chapters', id);
     if (cached) {
-      return cached;
+      return { ...cached, isCachedLocally: true };
     }
 
     // 2. Check bundled sample Scripture store (instant offline availability)
@@ -44,7 +44,7 @@ export class CharisBibleProvider implements IBibleProvider {
         c.chapterNumber === chapterNumber
     );
     if (sample) {
-      return sample;
+      return { ...sample, isCachedLocally: true };
     }
 
     // 3. Online Fetch: Retrieve complete chapter for any book (1-66) in NLT, KJV, or WEB
@@ -55,11 +55,11 @@ export class CharisBibleProvider implements IBibleProvider {
         chapterNumber
       );
       if (remoteChapter) {
-        return remoteChapter;
+        return { ...remoteChapter, isCachedLocally: true };
       }
     }
 
-    // 3. Fallback: If not found in target translation, try World English Bible (WEB default)
+    // 4. Fallback: If not found in target translation, try World English Bible (WEB default)
     const fallbackWeb = SAMPLE_CHAPTERS.find(
       (c) =>
         c.translationId === 'web' &&
@@ -69,11 +69,12 @@ export class CharisBibleProvider implements IBibleProvider {
     if (fallbackWeb) {
       return {
         ...fallbackWeb,
+        isCachedLocally: true,
         attribution: `${fallbackWeb.attribution} (Passage currently displaying default WEB text while ${translationId.toUpperCase()} is downloading)`
       };
     }
 
-    // 4. Default graceful fallback chapter
+    // 5. Default graceful fallback chapter (never return fake pseudo-verses)
     const book = getBookById(bookId);
     const transMeta = SUPPORTED_TRANSLATIONS.find((t) => t.id === translationId);
 
@@ -85,13 +86,9 @@ export class CharisBibleProvider implements IBibleProvider {
       chapterNumber,
       title: `${book?.name || bookId} ${chapterNumber}`,
       attribution: transMeta?.attribution || 'Public Domain',
-      verses: [
-        {
-          verseNumber: 1,
-          text: `Chapter ${chapterNumber} of ${book?.name || bookId} is available for offline download in Settings.`,
-          isParagraphStart: true
-        }
-      ]
+      isOfflinePlaceholder: true,
+      isCachedLocally: false,
+      verses: []
     };
   }
 

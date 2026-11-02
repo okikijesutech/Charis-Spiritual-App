@@ -57,7 +57,7 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
         {onOpenPicker ? (
           <button
             onClick={onOpenPicker}
-            className="flex items-center gap-1.5 font-serif font-bold text-sm sm:text-base bg-charis-surface hover:bg-charis-border-subtle text-charis-text border border-charis-border rounded-xl px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle transition-colors"
+            className="flex items-center gap-1.5 font-sans font-semibold text-sm bg-charis-surface hover:bg-charis-border-subtle text-charis-text border border-charis-border rounded-xl px-3 py-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-charis-primary cursor-pointer shadow-subtle transition-colors"
             title="Choose Book and Chapter (Searchable)"
             aria-label={`Current passage: ${currentBookName || selectedBookId} chapter ${selectedChapterNumber}. Click to change.`}
           >
