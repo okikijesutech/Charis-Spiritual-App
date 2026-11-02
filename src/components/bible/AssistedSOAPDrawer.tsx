@@ -144,7 +144,7 @@ export const AssistedSOAPDrawer: React.FC<AssistedSOAPDrawerProps> = ({
       soundAlarmService.playTheme('bowl');
     }
 
-    syncEngine.processQueue(activeUserId).catch(() => {});
+    syncEngine.triggerAutoSync(activeUserId);
     try { localStorage.removeItem(DRAWER_DRAFT_KEY); } catch {}
     setIsSaving(false);
     setSavedSuccess(true);

@@ -65,6 +65,9 @@ export async function syncPrayerEntry(op: SyncOperation): Promise<boolean> {
     entry_at: typeof payload.entryAt === 'string' ? payload.entryAt : new Date().toISOString(),
     tags: Array.isArray(payload.tags) ? (payload.tags as string[]) : [],
     scripture_references: Array.isArray(payload.scriptureReferences) ? (payload.scriptureReferences as any) : [],
+    is_answered: Boolean(payload.isAnswered),
+    answered_at: typeof payload.answeredAt === 'string' ? payload.answeredAt : null,
+    answered_note: typeof payload.answeredNote === 'string' ? payload.answeredNote : null,
     updated_at: new Date().toISOString(),
   };
 
@@ -203,6 +206,25 @@ export async function syncReadingPlan(op: SyncOperation): Promise<boolean> {
 
   const { error: upsertErr } = await supabase.from('reading_plans').upsert(row);
   if (upsertErr) throw new Error(upsertErr.message);
+
+  // Synchronize all daily assignments for this reading plan
+  const localAssignments = await planRepository.listAssignments(op.entityId, op.userId);
+  if (localAssignments.length > 0) {
+    const assignmentRows = localAssignments.map((a) => ({
+      id: a.id,
+      user_id: op.userId,
+      plan_id: op.entityId,
+      assignment_date: a.assignmentDate,
+      sequence: a.sequence,
+      day_number: a.dayNumber,
+      passages: a.passages as any,
+      status: a.status,
+      progress: (a.progress as any) || null,
+      completed_at: a.completedAt || null,
+      updated_at: a.updatedAt || new Date().toISOString(),
+    }));
+    await supabase.from('reading_plan_assignments').upsert(assignmentRows);
+  }
 
   await recordOpReceipt(op);
   await planRepository.markSynced(op.entityId, op.userId, 1);

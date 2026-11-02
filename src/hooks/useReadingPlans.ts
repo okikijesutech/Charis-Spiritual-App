@@ -128,7 +128,7 @@ export function useReadingPlans(userId: string) {
 
     setActivePlanId(planId);
     await loadPlans();
-    syncEngine.processQueue(userId).catch(() => {});
+    syncEngine.triggerAutoSync(userId);
     return totalChapters;
   };
 
@@ -184,7 +184,7 @@ export function useReadingPlans(userId: string) {
       payload: updated,
     });
 
-    syncEngine.processQueue(userId).catch(() => {});
+    syncEngine.triggerAutoSync(userId);
   };
 
   // Set featured plan
@@ -212,6 +212,16 @@ export function useReadingPlans(userId: string) {
       };
       await planRepository.save(updatedPlan);
       setPlans((prev) => prev.map((p) => (p.id === activePlan.id ? updatedPlan : p)));
+      await syncQueueManager.enqueue({
+        operationId: generateUUID(),
+        userId,
+        entityType: 'reading_plan',
+        entityId: activePlan.id,
+        action: 'update',
+        baseVersion: 1,
+        payload: updatedPlan,
+      });
+      syncEngine.triggerAutoSync(userId);
     }
   };
 
@@ -227,7 +237,7 @@ export function useReadingPlans(userId: string) {
       baseVersion: 1,
     });
     await loadPlans();
-    syncEngine.processQueue(userId).catch(() => {});
+    syncEngine.triggerAutoSync(userId);
   };
 
   return {

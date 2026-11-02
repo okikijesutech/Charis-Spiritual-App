@@ -81,7 +81,7 @@ export function useStudyJournal(activeUserId: string) {
     });
 
     await loadStudies();
-    syncEngine.processQueue(activeUserId).catch(() => {});
+    syncEngine.triggerAutoSync(activeUserId);
   };
 
   const deleteStudy = async (id: string) => {
@@ -96,7 +96,7 @@ export function useStudyJournal(activeUserId: string) {
     });
 
     await loadStudies();
-    syncEngine.processQueue(activeUserId).catch(() => {});
+    syncEngine.triggerAutoSync(activeUserId);
   };
 
   const resolveConflict = async (resolution: 'local' | 'remote' | 'merge') => {

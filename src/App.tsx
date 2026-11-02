@@ -62,7 +62,7 @@ export const AppContent: React.FC = () => {
       baseVersion: 0,
       payload: activity,
     })
-    syncEngine.processQueue(activeUserId).catch(() => {})
+    syncEngine.triggerAutoSync(activeUserId)
   }
 
   return (

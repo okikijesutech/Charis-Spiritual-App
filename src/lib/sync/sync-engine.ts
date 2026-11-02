@@ -7,6 +7,7 @@
 
 import { isSupabaseConfigured } from '../supabase/client';
 import { syncQueueManager } from './sync-queue';
+import { pullRemoteChanges } from './sync-pull';
 import { 
   syncPrayerEntry, 
   syncStudyEntry, 
@@ -31,6 +32,7 @@ export class SyncEngine {
   private listeners: Set<StatusListener> = new Set();
   private maxRetries = 5;
   private lastSyncedAt: string | null = null;
+  private autoSyncTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -78,11 +80,38 @@ export class SyncEngine {
   }
 
   /**
+   * Complete bidirectional synchronization (outbound queue + inbound pull).
+   */
+  async sync(userId: string): Promise<void> {
+    if (!userId || userId === 'demo-user-id') return;
+    await this.processQueue(userId);
+    if (isSupabaseConfigured()) {
+      await pullRemoteChanges(userId);
+      this.lastSyncedAt = new Date().toISOString();
+      const remaining = await syncQueueManager.listQueue(userId);
+      this.notify(remaining.length);
+    }
+  }
+
+  /**
+   * Debounced automatic background sync triggered on every mutation.
+   */
+  triggerAutoSync(userId: string): void {
+    if (!userId || userId === 'demo-user-id') return;
+    if (this.autoSyncTimer) clearTimeout(this.autoSyncTimer);
+    this.autoSyncTimer = setTimeout(() => {
+      this.sync(userId).catch((err) => {
+        console.warn('[Charis Sync] Automatic background sync error:', err);
+      });
+    }, 350);
+  }
+
+  /**
    * Process all pending operations for the authenticated user.
    */
   async processQueue(userId: string): Promise<void> {
     if (this.isSyncing) return;
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured()) {
       const pending = await syncQueueManager.listQueue(userId);
       this.notify(pending.length);
       return;

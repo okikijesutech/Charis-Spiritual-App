@@ -76,7 +76,7 @@ export function usePrayerJournal(activeUserId: string) {
     });
 
     await loadPrayers();
-    syncEngine.processQueue(activeUserId).catch(() => {});
+    syncEngine.triggerAutoSync(activeUserId);
   };
 
   const toggleAnswered = async (prayer: PrayerEntry) => {
@@ -101,7 +101,7 @@ export function usePrayerJournal(activeUserId: string) {
     });
 
     await loadPrayers();
-    syncEngine.processQueue(activeUserId).catch(() => {});
+    syncEngine.triggerAutoSync(activeUserId);
   };
 
   const deletePrayer = async (id: string) => {
@@ -116,7 +116,7 @@ export function usePrayerJournal(activeUserId: string) {
     });
 
     await loadPrayers();
-    syncEngine.processQueue(activeUserId).catch(() => {});
+    syncEngine.triggerAutoSync(activeUserId);
   };
 
   const resolveConflict = async (resolution: 'local' | 'remote' | 'merge') => {
