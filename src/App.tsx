@@ -12,6 +12,7 @@ import { SettingsModal } from './components/modals/SettingsModal'
 import { QuickActionModal } from './components/modals/QuickActionModal'
 import { AuthModal } from './components/modals/AuthModal'
 import { EthosModal } from './components/modals/EthosModal'
+import { WelcomeWalkthroughModal } from './components/onboarding/WelcomeWalkthroughModal'
 import { ReminderAlertBanner } from './components/notifications/ReminderAlertBanner'
 import { NavDestination } from './types'
 import type { ActivityLog } from './types/activity'
@@ -46,6 +47,13 @@ export const AppContent: React.FC = () => {
   const [isEthosOpen, setIsEthosOpen] = useState<boolean>(false)
   const [isQuickActionOpen, setIsQuickActionOpen] = useState<boolean>(false)
   const [isReaderChromeVisible, setIsReaderChromeVisible] = useState<boolean>(true)
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(() => {
+    try {
+      return !localStorage.getItem('charis_onboarding_completed')
+    } catch {
+      return false
+    }
+  })
   
   // Link state between Bible, Study Journal, and Journey plans
   const [studyInitialRef, setStudyInitialRef] = useState<string | undefined>(undefined)
@@ -175,6 +183,17 @@ export const AppContent: React.FC = () => {
       <EthosModal
         isOpen={isEthosOpen}
         onClose={() => setIsEthosOpen(false)}
+        onOpenWalkthrough={() => {
+          setIsEthosOpen(false)
+          setIsOnboardingOpen(true)
+        }}
+      />
+
+      {/* First-Time User Welcome Walkthrough Modal */}
+      <WelcomeWalkthroughModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onOpenSignUp={() => setIsAuthOpen(true)}
       />
 
       {/* Quick Action Activity Modal */}

@@ -5,9 +5,10 @@ import { Sparkles, Shield, Heart, BookOpen, Compass, Check } from 'lucide-react'
 interface EthosModalProps {
   isOpen: boolean
   onClose: () => void
+  onOpenWalkthrough?: () => void
 }
 
-export const EthosModal: React.FC<EthosModalProps> = ({ isOpen, onClose }) => {
+export const EthosModal: React.FC<EthosModalProps> = ({ isOpen, onClose, onOpenWalkthrough }) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -77,11 +78,23 @@ export const EthosModal: React.FC<EthosModalProps> = ({ isOpen, onClose }) => {
           </div>
         </section>
 
-        {/* Dismiss / Close Action */}
-        <div className="pt-2 flex justify-end">
+        {/* Actions */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          {onOpenWalkthrough ? (
+            <button
+              type="button"
+              onClick={onOpenWalkthrough}
+              className="text-xs text-charis-text-muted hover:text-charis-primary transition-colors underline-offset-4 hover:underline cursor-pointer"
+            >
+              Replay Welcome Walkthrough
+            </button>
+          ) : (
+            <div />
+          )}
+
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white text-xs font-medium transition-colors shadow-subtle"
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-charis-primary hover:bg-charis-primary-hover text-white text-xs font-medium transition-colors shadow-subtle cursor-pointer"
           >
             Enter the Sanctuary
           </button>
