@@ -60,9 +60,19 @@ export const BibleView: React.FC<BibleViewProps> = ({
   const handleFontSizeChange = (updater: (prev: number) => number) => {
     setFontSize((prev) => {
       const next = updater(prev);
-      try {
-        localStorage.setItem('charis_reader_font_size', String(next));
-      } catch {}
+      try { localStorage.setItem('charis_reader_font_size', String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const [isRedLetterEnabled, setIsRedLetterEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem('charis_red_letter_enabled') !== 'false'; } catch { return true; }
+  });
+
+  const handleToggleRedLetter = () => {
+    setIsRedLetterEnabled((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('charis_red_letter_enabled', String(next)); } catch {}
       return next;
     });
   };
@@ -229,7 +239,8 @@ export const BibleView: React.FC<BibleViewProps> = ({
 
   const handleCopy = () => {
     if (!activeVerse || !chapter) return;
-    navigator.clipboard.writeText(`"${activeVerse.text}" — ${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`);
+    const cleanText = activeVerse.text.replace(/[{}]/g, '');
+    navigator.clipboard.writeText(`"${cleanText}" — ${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${currentTranslationMeta.shortName})`);
     setCopiedNotification(true);
     setTimeout(() => { setCopiedNotification(false); setActiveVerse(null); }, 1200);
   };
@@ -248,30 +259,18 @@ export const BibleView: React.FC<BibleViewProps> = ({
           onOpenTranslationPicker={() => setIsTranslationPickerOpen(true)}
           onOpenSOAP={() => handleOpenSOAPAssistant(`${chapter ? chapter.bookName : currentBook.name} ${selectedChapterNumber}`)}
           onFontSizeChange={handleFontSizeChange} isTranslationInstalled={isInstalledLocally}
+          isRedLetterEnabled={isRedLetterEnabled} onToggleRedLetter={handleToggleRedLetter}
         />
       </div>
 
       {/* 2. Scripture Reading Surface */}
       <ScriptureReadingSurface
-        chapter={chapter}
-        currentBook={currentBook}
-        selectedChapterNumber={selectedChapterNumber}
-        targetVerseNumber={targetVerseNumber}
-        currentTranslationMeta={currentTranslationMeta}
-        fontSize={fontSize}
-        interactiveVerses={interactiveVerses}
-        isLoading={isLoading}
-        isChromeVisible={isChromeVisible}
-        onToggleChrome={onToggleChrome}
-        onSelectVerse={setActiveVerse}
-        onPrevChapter={handlePrevChapter}
-        onNextChapter={handleNextChapter}
-        onAttachStudyNote={handleOpenSOAPAssistant}
-        onRetry={loadChapter}
-        onSwitchTranslation={handleTranslationChange}
-        journeyContext={journeyContext}
-        isJourneyCompleted={Boolean(journeyCompletedDay === journeyContext?.dayNumber)}
-        onCompleteJourney={handleCompleteJourney}
+        chapter={chapter} currentBook={currentBook} selectedChapterNumber={selectedChapterNumber} targetVerseNumber={targetVerseNumber}
+        currentTranslationMeta={currentTranslationMeta} fontSize={fontSize} interactiveVerses={interactiveVerses} isLoading={isLoading}
+        isChromeVisible={isChromeVisible} onToggleChrome={onToggleChrome} onSelectVerse={setActiveVerse} onPrevChapter={handlePrevChapter}
+        onNextChapter={handleNextChapter} onAttachStudyNote={handleOpenSOAPAssistant} onRetry={loadChapter} onSwitchTranslation={handleTranslationChange}
+        journeyContext={journeyContext} isJourneyCompleted={Boolean(journeyCompletedDay === journeyContext?.dayNumber)} onCompleteJourney={handleCompleteJourney}
+        isRedLetterEnabled={isRedLetterEnabled}
       />
 
       {/* 3. Floating Quick Chapter Stepper on Mobile (above bottom nav) */}

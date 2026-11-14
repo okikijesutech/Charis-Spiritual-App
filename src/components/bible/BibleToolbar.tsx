@@ -33,6 +33,8 @@ interface BibleToolbarProps {
   onOpenSOAP?: () => void;
   onFontSizeChange: (updater: (prev: number) => number) => void;
   isTranslationInstalled?: boolean;
+  isRedLetterEnabled?: boolean;
+  onToggleRedLetter?: () => void;
 }
 
 export const BibleToolbar: React.FC<BibleToolbarProps> = ({
@@ -53,6 +55,8 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
   onOpenSOAP,
   onFontSizeChange,
   isTranslationInstalled = false,
+  isRedLetterEnabled = true,
+  onToggleRedLetter,
 }) => {
   const currentTranslationMeta =
     SUPPORTED_TRANSLATIONS.find((t) => t.id === selectedTranslation) || SUPPORTED_TRANSLATIONS[0];
@@ -200,8 +204,29 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
         )}
       </div>
 
-      {/* Font Size Adjuster */}
-      <div className="flex items-center gap-1 border border-charis-border rounded-xl px-2 py-1 bg-charis-border-subtle/40">
+      {/* Right Controls: Red Letter & Font Adjuster */}
+      <div className="flex items-center gap-2">
+        {onToggleRedLetter && (
+          <button
+            type="button"
+            onClick={onToggleRedLetter}
+            className={`px-2.5 py-1.5 rounded-xl border text-xs font-serif font-bold transition-all shadow-subtle flex items-center gap-1.5 shrink-0 cursor-pointer ${
+              isRedLetterEnabled
+                ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400'
+                : 'bg-charis-surface border-charis-border text-charis-text-muted hover:text-charis-text'
+            }`}
+            title={isRedLetterEnabled ? 'Words of Christ in Red (Active)' : 'Words of Christ in Red (Off)'}
+            aria-label="Toggle Words of Christ in Red"
+          >
+            <span className={isRedLetterEnabled ? 'text-rose-600 dark:text-rose-400 text-[10px]' : 'text-charis-text-muted text-[10px]'}>
+              {isRedLetterEnabled ? '●' : '○'}
+            </span>
+            <span className="hidden sm:inline">Red Letter</span>
+          </button>
+        )}
+
+        {/* Font Size Adjuster */}
+        <div className="flex items-center gap-1 border border-charis-border rounded-xl px-2 py-1 bg-charis-border-subtle/40">
         <Type className="w-3.5 h-3.5 text-charis-text-muted mr-1" />
         <button
           onClick={() => onFontSizeChange((prev) => Math.max(15, prev - 1))}
@@ -219,6 +244,7 @@ export const BibleToolbar: React.FC<BibleToolbarProps> = ({
           A+
         </button>
       </div>
+    </div>
     </div>
   );
 };

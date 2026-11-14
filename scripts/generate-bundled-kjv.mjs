@@ -15,24 +15,25 @@ const BOOK_ORDER = [
   '2PE','1JN','2JN','3JN','JUD','REV'
 ];
 
+const NT_RED_BOOKS = {
+  'MAT': 'matthew',
+  'MRK': 'mark',
+  'LUK': 'luke',
+  'JHN': 'john',
+  'ACT': 'acts',
+  '1CO': '1_corinthians',
+  '2CO': '2_corinthians',
+  'REV': 'revelation'
+};
+
 const TARGET_DIR = path.resolve(__dirname, '../public/bible');
 const TARGET_FILE = path.join(TARGET_DIR, 'kjv.json');
 
-async function downloadKjv() {
-  if (fs.existsSync(TARGET_FILE) && fs.statSync(TARGET_FILE).size > 3000000) {
-    console.log('[bundle-kjv] public/bible/kjv.json already exists and is healthy.');
-    return;
-  }
-
-  console.log('[bundle-kjv] Downloading canonical KJV Bible dataset...');
-  fs.mkdirSync(TARGET_DIR, { recursive: true });
-
-  const url = 'https://raw.githubusercontent.com/thiagobodruk/bible/master/json/en_kjv.json';
-
-  const rawJson = await new Promise((resolve, reject) => {
+function fetchBuffer(url) {
+  return new Promise((resolve, reject) => {
     https.get(url, (res) => {
       if (res.statusCode !== 200) {
-        reject(new Error(`Failed to download KJV: HTTP ${res.statusCode}`));
+        reject(new Error(`Failed to download ${url}: HTTP ${res.statusCode}`));
         return;
       }
       let buffer = '';
@@ -40,6 +41,22 @@ async function downloadKjv() {
       res.on('end', () => resolve(buffer));
     }).on('error', reject);
   });
+}
+
+async function downloadKjv() {
+  if (fs.existsSync(TARGET_FILE) && fs.statSync(TARGET_FILE).size > 3000000) {
+    const existing = fs.readFileSync(TARGET_FILE, 'utf8');
+    if (existing.includes('{For God so loved the world')) {
+      console.log('[bundle-kjv] public/bible/kjv.json with Red Letter text is already healthy.');
+      return;
+    }
+  }
+
+  console.log('[bundle-kjv] Downloading canonical KJV Bible dataset...');
+  fs.mkdirSync(TARGET_DIR, { recursive: true });
+
+  const url = 'https://raw.githubusercontent.com/thiagobodruk/bible/master/json/en_kjv.json';
+  const rawJson = await fetchBuffer(url);
 
   const parsed = JSON.parse(rawJson);
   if (!Array.isArray(parsed) || parsed.length !== 66) {
@@ -58,14 +75,33 @@ async function downloadKjv() {
     });
   });
 
+  // Overlay Red Letter Words of Jesus for New Testament
+  console.log('[bundle-kjv] Overlaying Words of Christ in Red tags...');
+  for (const [code, file] of Object.entries(NT_RED_BOOKS)) {
+    try {
+      const rawBook = await fetchBuffer(`https://raw.githubusercontent.com/nolanbaxter/kjv-bible/master/${file}.json`);
+      const bookData = JSON.parse(rawBook);
+      for (const chNum in bookData.chapters) {
+        const key = `${code}:${chNum}`;
+        const versesObj = bookData.chapters[chNum];
+        const versesArray = [];
+        const vKeys = Object.keys(versesObj).map(Number).sort((a,b) => a - b);
+        for (const vNum of vKeys) {
+          versesArray.push(versesObj[String(vNum)]);
+        }
+        compact[key] = versesArray;
+      }
+    } catch (err) {
+      console.warn(`[bundle-kjv] Warning: failed to overlay red letters for ${code}:`, err.message);
+    }
+  }
+
   const output = JSON.stringify(compact);
   fs.writeFileSync(TARGET_FILE, output, 'utf-8');
 
-  console.log(`[bundle-kjv] Successfully packaged KJV Bible:`);
+  console.log(`[bundle-kjv] Successfully packaged KJV Bible with Red Letters:`);
   console.log(` - Chapters: ${Object.keys(compact).length}`);
-  console.log(` - Verses: ${totalVerses}`);
   console.log(` - File Size: ${(output.length / (1024 * 1024)).toFixed(2)} MB`);
-  console.log(` - Target: ${TARGET_FILE}`);
 }
 
 downloadKjv().catch(err => {

@@ -8,6 +8,7 @@
 import React from 'react'
 import { Bookmark, ChevronLeft, ChevronRight, Loader2, BookMarked, Sparkles, CloudOff, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { Badge } from '../ui/Badge'
+import { renderVerseSegments } from '../../lib/bible/red-letter'
 import type { BibleChapter, CanonicalBook, BibleTranslationMeta } from '../../types/bible'
 import type { InteractiveVerse } from './VerseActionModal'
 
@@ -39,13 +40,14 @@ interface ScriptureReadingSurfaceProps {
   journeyContext?: ActiveJourneyContext | null
   isJourneyCompleted?: boolean
   onCompleteJourney?: () => void
+  isRedLetterEnabled?: boolean
 }
 
 export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = ({
   chapter, currentBook, selectedChapterNumber, targetVerseNumber, currentTranslationMeta,
   fontSize, interactiveVerses, isLoading, isChromeVisible, onToggleChrome, onSelectVerse,
   onPrevChapter, onNextChapter, onAttachStudyNote, onRetry, onSwitchTranslation,
-  journeyContext, isJourneyCompleted = false, onCompleteJourney,
+  journeyContext, isJourneyCompleted = false, onCompleteJourney, isRedLetterEnabled = true,
 }) => {
   return (
     <article
@@ -165,7 +167,7 @@ export const ScriptureReadingSurface: React.FC<ScriptureReadingSurfaceProps> = (
                   <sup className="text-xs font-sans font-bold text-charis-primary mr-2 select-none">
                     {v.verseNumber}
                   </sup>
-                  <span>{v.text}</span>
+                  <span>{renderVerseSegments(v.text, isRedLetterEnabled)}</span>
                   {v.isBookmarked && (
                     <Bookmark className="inline-block w-3.5 h-3.5 ml-1.5 text-charis-primary fill-current align-middle" />
                   )}

@@ -2,6 +2,7 @@ import React from 'react'
 import { Bookmark, Copy, Check, Highlighter, FileText } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
+import { renderVerseSegments, cleanVerseText } from '../../lib/bible/red-letter'
 import type { BibleChapter, BibleVerse } from '../../types/bible'
 
 export interface InteractiveVerse extends BibleVerse {
@@ -44,7 +45,7 @@ export const VerseActionModal: React.FC<VerseActionModalProps> = ({
     >
       <div className="space-y-5">
         <blockquote className="font-serif italic text-base text-charis-text bg-charis-border-subtle/60 p-4 rounded-xl border-l-2 border-charis-primary">
-          “{activeVerse.text}”
+          “{renderVerseSegments(activeVerse.text, true)}”
         </blockquote>
 
         <div className="grid grid-cols-2 gap-3">
@@ -109,7 +110,7 @@ export const VerseActionModal: React.FC<VerseActionModalProps> = ({
             const ref = `${chapter.bookName} ${chapter.chapterNumber}:${activeVerse.verseNumber} (${translationShortName})`
             onClose()
             if (onAttachStudyNote) {
-              onAttachStudyNote(ref, activeVerse.text)
+              onAttachStudyNote(ref, cleanVerseText(activeVerse.text))
             }
           }}
         >
