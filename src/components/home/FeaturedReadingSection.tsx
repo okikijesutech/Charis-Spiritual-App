@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, CheckCircle2, Circle, ArrowRight, Sparkles } from 'lucide-react';
+import { BookOpen, CheckCircle2, ArrowRight, Sparkles } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { planRepository } from '../../lib/db/plan-repository';
-import { syncQueueManager } from '../../lib/sync/sync-queue';
-import { syncEngine } from '../../lib/sync/sync-engine';
-import { generateUUID } from '../../lib/id';
 import type { ReadingPlan, ReadingPlanAssignment } from '../../types/plan';
 import type { NavDestination } from '../../types';
 
@@ -36,7 +33,6 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
       if (target) {
         const assignments = await planRepository.listAssignments(target.id, userId);
         if (isMounted) {
-          // Find first uncompleted assignment or the first one
           const next = assignments.find((a) => a.status !== 'completed') || assignments[0] || null;
           setTodayAssignment(next);
         }
@@ -47,53 +43,6 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
       isMounted = false;
     };
   }, [userId]);
-
-  const handleToggle = async () => {
-    if (!todayAssignment || !featuredPlan) return;
-    const isCompleted = todayAssignment.status !== 'completed';
-    const now = new Date().toISOString();
-
-    const updated: ReadingPlanAssignment = {
-      ...todayAssignment,
-      status: isCompleted ? 'completed' : 'pending',
-      completedAt: isCompleted ? now : null,
-      updatedAt: now,
-    };
-
-    await planRepository.saveAssignment(updated);
-    setTodayAssignment(updated);
-
-    const newCompletedCount = (featuredPlan.completedDays || 0) + (isCompleted ? 1 : -1);
-    const updatedPlan: ReadingPlan = {
-      ...featuredPlan,
-      completedDays: Math.max(0, newCompletedCount),
-      updatedAt: now,
-    };
-    await planRepository.save(updatedPlan);
-    setFeaturedPlan(updatedPlan);
-
-    await syncQueueManager.enqueue({
-      operationId: generateUUID(),
-      userId,
-      entityType: 'reading_plan_assignment',
-      entityId: todayAssignment.id,
-      action: 'update',
-      baseVersion: todayAssignment.sync?.localVersion ?? 1,
-      payload: updated,
-    });
-
-    await syncQueueManager.enqueue({
-      operationId: generateUUID(),
-      userId,
-      entityType: 'reading_plan',
-      entityId: featuredPlan.id,
-      action: 'update',
-      baseVersion: featuredPlan.sync?.localVersion ?? 1,
-      payload: updatedPlan,
-    });
-
-    syncEngine.triggerAutoSync(userId);
-  };
 
   if (!featuredPlan || !todayAssignment) {
     return (
@@ -132,19 +81,45 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
   const isCompleted = todayAssignment.status === 'completed';
   const passagesText = todayAssignment.passages.map((p) => p.formatted).join(', ');
 
+  const handleOpenInBible = () => {
+    const ref = todayAssignment.passages[0]?.formatted || passagesText;
+    if (onOpenPassage && ref) {
+      onOpenPassage(ref, {
+        planId: featuredPlan.id,
+        planName: featuredPlan.name,
+        assignmentId: todayAssignment.id,
+        dayNumber: todayAssignment.dayNumber,
+      });
+    } else {
+      onNavigate('bible');
+    }
+  };
+
   return (
     <section aria-labelledby="featured-reading-title">
-      <div className="relative overflow-hidden rounded-2xl bg-charis-surface border border-charis-border p-6 shadow-card hover:border-charis-primary/40 transition-all">
+      <div 
+        onClick={handleOpenInBible}
+        className="group relative overflow-hidden rounded-2xl bg-charis-surface border border-charis-border p-6 shadow-card hover:border-charis-primary/60 hover:shadow-subtle transition-all cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleOpenInBible();
+          }
+        }}
+        aria-label={`Open Scripture for ${passagesText}`}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-charis-primary/10 text-charis-primary">
+            <span className="p-2 rounded-xl bg-charis-primary/10 text-charis-primary group-hover:bg-charis-primary group-hover:text-white transition-colors">
               <BookOpen className="w-5 h-5" />
             </span>
             <div>
               <span className="text-[11px] font-semibold text-charis-primary uppercase tracking-wider">
                 Featured Plan · {featuredPlan.name}
               </span>
-              <h3 id="featured-reading-title" className="text-lg font-serif font-bold text-charis-text">
+              <h3 id="featured-reading-title" className="text-lg font-serif font-bold text-charis-text group-hover:text-charis-primary transition-colors">
                 {passagesText}
               </h3>
             </div>
@@ -156,43 +131,30 @@ export const FeaturedReadingSection: React.FC<FeaturedReadingSectionProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-charis-border/60">
-          <button
-            onClick={handleToggle}
-            className="inline-flex items-center gap-2 text-xs font-medium text-charis-text hover:text-charis-primary transition-colors py-1.5 px-3 rounded-lg border border-charis-border bg-charis-border-subtle/50"
-          >
+          <div className="flex items-center gap-2 text-xs">
             {isCompleted ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Completed</span>
-              </>
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                <CheckCircle2 className="w-4 h-4" />
+                Completed for today
+              </span>
             ) : (
-              <>
-                <Circle className="w-4 h-4 text-charis-text-muted" />
-                <span>Mark Complete</span>
-              </>
+              <span className="text-charis-text-muted font-sans">
+                Today’s reading rhythm · Grace over streaks
+              </span>
             )}
-          </button>
+          </div>
 
           <Button
-            variant="terracotta-soft"
+            variant="primary"
             size="sm"
-            onClick={() => {
-              const ref = todayAssignment.passages[0]?.formatted || passagesText;
-              if (onOpenPassage && ref) {
-                onOpenPassage(ref, {
-                  planId: featuredPlan.id,
-                  planName: featuredPlan.name,
-                  assignmentId: todayAssignment.id,
-                  dayNumber: todayAssignment.dayNumber,
-                });
-              } else {
-                onNavigate('bible');
-              }
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenInBible();
             }}
-            className="gap-1.5 text-xs"
+            className="gap-1.5 text-xs font-medium"
           >
             <span>Open in Bible</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Button>
         </div>
       </div>
