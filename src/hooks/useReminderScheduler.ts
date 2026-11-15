@@ -52,10 +52,12 @@ export function useReminderScheduler(
     [preferences, timezone]
   );
 
-  // Test trigger: previews sound and notification for a specific theme or activity
+  // Test trigger: previews sound, system notification, and in-app banner
   const triggerTestReminder = useCallback(
     async (theme: SoundTheme = 'bowl', label = 'Contemplative Reminder') => {
-      soundAlarmService.playTheme(theme);
+      if (preferences.soundEnabled !== false) {
+        soundAlarmService.playTheme(theme);
+      }
 
       await notificationManager.sendContemplativeReminder(
         {
@@ -86,13 +88,22 @@ export function useReminderScheduler(
 
     const checkSchedule = () => {
       const now = new Date();
-      const formatter = new Intl.DateTimeFormat('en-GB', {
-        timeZone: timezone || undefined,
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-      });
-      const currentHHMM = formatter.format(now);
+      let currentHHMM = '';
+
+      try {
+        const formatter = new Intl.DateTimeFormat('en-GB', {
+          timeZone: timezone || undefined,
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        });
+        const parts = formatter.formatToParts(now);
+        const h = parts.find((p) => p.type === 'hour')?.value || '00';
+        const m = parts.find((p) => p.type === 'minute')?.value || '00';
+        currentHHMM = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+      } catch {
+        currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      }
 
       if (checkedMinuteRef.current === currentHHMM) return;
       checkedMinuteRef.current = currentHHMM;
@@ -105,7 +116,7 @@ export function useReminderScheduler(
       for (const item of reminderList) {
         if (!item.enabled) continue;
         if (item.time === currentHHMM) {
-          const alarmKey = `charis_alarm_${item.id}_${todayKey}`;
+          const alarmKey = `charis_alarm_${item.id}_${item.time}_${todayKey}`;
           if (!localStorage.getItem(alarmKey)) {
             localStorage.setItem(alarmKey, 'true');
             const desc = item.type === 'prayer'
@@ -118,8 +129,19 @@ export function useReminderScheduler(
     };
 
     checkSchedule();
-    const interval = setInterval(checkSchedule, 20000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkSchedule, 15000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkSchedule();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [preferences, timezone, triggerAlert]);
 
   return {

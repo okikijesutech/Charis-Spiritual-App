@@ -37,13 +37,24 @@ export class NotificationManager {
   }
 
   /**
-   * Request browser notification permission.
+   * Request browser notification permission (supporting promises and legacy callbacks).
    */
   async requestPermission(): Promise<NotificationPermissionState> {
     if (!this.isSupported()) return 'unsupported';
     try {
-      const result = await Notification.requestPermission();
-      return result as NotificationPermissionState;
+      if (typeof Notification.requestPermission === 'function') {
+        const p = Notification.requestPermission();
+        if (p && typeof p.then === 'function') {
+          const res = await p;
+          return res as NotificationPermissionState;
+        }
+        return new Promise<NotificationPermissionState>((resolve) => {
+          Notification.requestPermission((res) => {
+            resolve(res as NotificationPermissionState);
+          });
+        });
+      }
+      return 'unsupported';
     } catch (err) {
       console.warn('[NotificationManager] Permission request failed:', err);
       return 'denied';
@@ -64,7 +75,6 @@ export class NotificationManager {
     }
 
     try {
-      // Format current time in user's timezone as HH:mm
       const formatter = new Intl.DateTimeFormat('en-GB', {
         timeZone: timeZone || undefined,
         hour: '2-digit',
@@ -82,10 +92,8 @@ export class NotificationManager {
       const endMinutes = endH * 60 + endM;
 
       if (startMinutes > endMinutes) {
-        // Window spans across midnight (e.g. 22:00 to 07:00)
         return currentMinutes >= startMinutes || currentMinutes < endMinutes;
       } else {
-        // Window is within the same calendar day (e.g. 13:00 to 15:00)
         return currentMinutes >= startMinutes && currentMinutes < endMinutes;
       }
     } catch {
@@ -123,29 +131,40 @@ export class NotificationManager {
     // Security Gate: Ensure no potential leaks of journal data
     const safeTitle = options.title.slice(0, 80);
     const safeBody = options.body.slice(0, 200);
+    const iconUrl = '/pwa-192x192.png';
 
-    try {
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration && 'showNotification' in registration) {
-          await registration.showNotification(safeTitle, {
+    // 1. Try ServiceWorker showNotification (guaranteed to work across mobile & desktop browsers)
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 1200)),
+        ]);
+        const swReg = registration || (await navigator.serviceWorker.getRegistration());
+        if (swReg && 'showNotification' in swReg) {
+          await swReg.showNotification(safeTitle, {
             body: safeBody,
-            icon: '/icon-192.png',
-            badge: '/icon-192.png',
+            icon: iconUrl,
+            badge: iconUrl,
             tag: options.tag || 'charis-contemplative-rhythm',
-          });
+          } as NotificationOptions);
           return true;
         }
+      } catch (swErr) {
+        console.warn('[NotificationManager] ServiceWorker showNotification failed:', swErr);
       }
+    }
 
+    // 2. Fallback to desktop window Notification if supported
+    try {
       new Notification(safeTitle, {
         body: safeBody,
-        icon: '/icon-192.png',
+        icon: iconUrl,
         tag: options.tag || 'charis-contemplative-rhythm',
       });
       return true;
     } catch (err) {
-      console.warn('[NotificationManager] Failed to trigger notification:', err);
+      console.warn('[NotificationManager] Fallback window Notification failed:', err);
       return false;
     }
   }

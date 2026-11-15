@@ -38,7 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isLicencesOpen, setIsLicencesOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
 
-  const { reminderPreferences, updateReminders } = useUserSettings(activeUserId);
+  const { reminderPreferences, updateReminders, settings } = useUserSettings(activeUserId);
 
   return (
     <>
@@ -95,6 +95,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <NotificationPreferencesSection
               preferences={reminderPreferences}
               onUpdate={updateReminders}
+              timeZone={settings?.timezone}
             />
           </div>
 

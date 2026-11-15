@@ -6,7 +6,7 @@
  */
 
 import React, { useState } from 'react';
-import { Bell, Moon, ShieldCheck, AlertCircle, Volume2, VolumeX, Play } from 'lucide-react';
+import { Bell, Moon, ShieldCheck, AlertCircle, Volume2, VolumeX, Play, CheckCircle2 } from 'lucide-react';
 import { notificationManager, NotificationPermissionState } from '../../lib/notifications/notification-manager';
 import { soundAlarmService } from '../../lib/audio/sound-alarm';
 import { ReminderPreferences } from '../../types/settings';
@@ -27,19 +27,32 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
     notificationManager.getPermission()
   );
   const [isTestingChime, setIsTestingChime] = useState(false);
+  const [testFeedback, setTestFeedback] = useState<string | null>(null);
 
   const handleTestChime = async () => {
     setIsTestingChime(true);
+    setTestFeedback(null);
     soundAlarmService.playTheme('cathedral');
-    await notificationManager.sendContemplativeReminder(
-      {
-        title: 'Charis Sacred Chime',
-        body: 'Your contemplative reminder and chime alarm are active and working.',
-        tag: 'charis-test-rhythm',
-      },
-      { ...preferences, enabled: true, quietHours: { ...preferences.quietHours, enabled: false } },
-      timeZone
-    );
+
+    let currentPerm = permission;
+    if (currentPerm === 'default') {
+      currentPerm = await notificationManager.requestPermission();
+      setPermission(currentPerm);
+    }
+
+    if (currentPerm === 'granted') {
+      const sent = await notificationManager.sendContemplativeReminder(
+        { title: 'Charis Sacred Chime', body: 'Your contemplative reminder and chime alarm are active and working.', tag: 'charis-test-rhythm' },
+        { ...preferences, enabled: true, quietHours: { ...preferences.quietHours, enabled: false } },
+        timeZone
+      );
+      setTestFeedback(sent ? 'Notification & sound chime sent!' : 'Chime played. Check system notification settings.');
+    } else if (currentPerm === 'denied') {
+      setTestFeedback('Chime played. System notifications are blocked in browser settings.');
+    } else {
+      setTestFeedback('Chime played. In-app alerts are active.');
+    }
+
     setTimeout(() => setIsTestingChime(false), 2400);
   };
 
@@ -51,9 +64,11 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
     }
   };
 
-  const handleToggleEnabled = (enabled: boolean) => {
-    if (enabled && permission !== 'granted') {
-      handleRequestPermission();
+  const handleToggleEnabled = async (enabled: boolean) => {
+    if (enabled && permission === 'default') {
+      const res = await notificationManager.requestPermission();
+      setPermission(res);
+      onUpdate({ ...preferences, enabled: true });
     } else {
       onUpdate({ ...preferences, enabled });
     }
@@ -88,15 +103,23 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
         </button>
       </div>
 
-      {/* Permission Status Notice */}
+      {/* Permission Status Notices */}
       {permission === 'denied' && (
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-          <div>
-            <span className="font-semibold block mb-0.5">Notifications Blocked by Browser</span>
-            <p className="opacity-90 leading-relaxed text-[11px]">
-              To receive daily rhythm notifications on Android or desktop, please allow permissions in your browser address bar or site settings.
-            </p>
+          <div className="text-[11px] leading-relaxed">
+            <span className="font-semibold block mb-0.5">System Notifications Blocked</span>
+            Your browser blocked notifications for this site. Click the lock or settings icon in your browser address bar and set Notifications to &quot;Allow&quot;. In-app chimes will still sound.
+          </div>
+        </div>
+      )}
+
+      {permission === 'unsupported' && preferences.enabled && (
+        <div className="p-3 rounded-xl bg-charis-surface border border-charis-border text-xs text-charis-text flex items-start gap-2.5">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-charis-primary" />
+          <div className="text-[11px] text-charis-text-muted leading-relaxed">
+            <span className="font-semibold text-charis-text block mb-0.5">Mobile PWA Notice</span>
+            On iPhone / iPad, Apple requires adding Charis to your Home Screen (tap Safari’s Share button ⎘ and choose <strong>Add to Home Screen</strong>). In-app chimes and alerts remain active.
           </div>
         </div>
       )}
@@ -116,7 +139,7 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
       {/* Preferences Options (Only visible when enabled) */}
       {preferences.enabled && (
         <div className="space-y-3.5 pt-2">
-          {/* Multiple Scheduled Rhythms with Individual Sound Themes */}
+          {/* Multiple Scheduled Rhythms */}
           <ScheduledRemindersList
             reminders={preferences.reminders}
             onUpdate={(reminders) => onUpdate({ ...preferences, reminders })}
@@ -142,12 +165,7 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
               </div>
               <button
                 type="button"
-                onClick={() =>
-                  onUpdate({
-                    ...preferences,
-                    soundEnabled: preferences.soundEnabled === false,
-                  })
-                }
+                onClick={() => onUpdate({ ...preferences, soundEnabled: preferences.soundEnabled === false })}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                   preferences.soundEnabled !== false ? 'bg-charis-primary' : 'bg-charis-border'
                 }`}
@@ -161,20 +179,28 @@ export const NotificationPreferencesSection: React.FC<NotificationPreferencesSec
               </button>
             </div>
 
-            {/* Test Preview Button */}
-            <div className="pt-2 flex items-center justify-between border-t border-charis-border/50">
-              <span className="text-[11px] text-charis-text-muted">
-                Preview test chime and notification
-              </span>
-              <button
-                type="button"
-                onClick={handleTestChime}
-                disabled={isTestingChime}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-charis-border-subtle/80 hover:bg-charis-border text-charis-text text-xs font-medium transition-colors cursor-pointer"
-              >
-                <Play className={`w-3 h-3 text-charis-primary ${isTestingChime ? 'animate-pulse' : ''}`} />
-                <span>{isTestingChime ? 'Chiming...' : 'Test Sound'}</span>
-              </button>
+            {/* Test Preview Button & Feedback */}
+            <div className="pt-2 flex flex-col gap-2 border-t border-charis-border/50">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-charis-text-muted">
+                  Preview test chime and notification
+                </span>
+                <button
+                  type="button"
+                  onClick={handleTestChime}
+                  disabled={isTestingChime}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-charis-border-subtle/80 hover:bg-charis-border text-charis-text text-xs font-medium transition-colors cursor-pointer"
+                >
+                  <Play className={`w-3 h-3 text-charis-primary ${isTestingChime ? 'animate-pulse' : ''}`} />
+                  <span>{isTestingChime ? 'Testing...' : 'Test Notification & Chime'}</span>
+                </button>
+              </div>
+              {testFeedback && (
+                <div className="flex items-center gap-1.5 text-[11px] text-charis-primary bg-charis-primary/5 p-2 rounded-lg border border-charis-primary/20">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>{testFeedback}</span>
+                </div>
+              )}
             </div>
           </div>
 
